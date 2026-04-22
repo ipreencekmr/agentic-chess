@@ -1,0 +1,52 @@
+name: PR Checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  docker-build-and-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        run: docker build -f backend/Dockerfile -t agentic-chess-backend:ci .
+
+      - name: Build frontend image
+        run: docker build -f frontend/Dockerfile -t agentic-chess-frontend:ci .
+
+      - name: Build Hugging Face root image
+        run: docker build -t agentic-chess-hf:ci .
+
+      - name: Start backend container
+        run: |
+          docker run -d --name chess-backend-ci -p 8000:8000 agentic-chess-backend:ci
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/api/health > /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend health endpoint did not become ready in time."
+          docker logs chess-backend-ci || true
+          exit 1
+
+      - name: Container logs (always)
+        if: always()
+        run: docker logs chess-backend-ci || true
+
+      - name: Cleanup container
+        if: always()
+        run: docker rm -f chess-backend-ci || true
+
