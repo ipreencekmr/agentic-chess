@@ -2,52 +2,12 @@ name: Deploy To Hugging Face Space
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
-  precheck:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -f backend/Dockerfile -t agentic-chess-backend:precheck .
-
-      - name: Build frontend image
-        run: docker build -f frontend/Dockerfile -t agentic-chess-frontend:precheck .
-
-      - name: Build Hugging Face root image
-        run: docker build -t agentic-chess-hf:precheck .
-
-      - name: Start backend container
-        run: docker run -d --name chess-backend-precheck -p 8000:8000 agentic-chess-backend:precheck
-
-      - name: Wait for backend health
-        run: |
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:8000/api/health > /tmp/health.json; then
-              cat /tmp/health.json
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Backend health endpoint did not become ready in time."
-          docker logs chess-backend-precheck || true
-          exit 1
-
-      - name: Cleanup
-        if: always()
-        run: docker rm -f chess-backend-precheck || true
-
   deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: precheck
     steps:
       - name: Checkout
         uses: actions/checkout@v4

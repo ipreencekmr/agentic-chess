@@ -1,3 +1,13 @@
+---
+title: Agentic Chess
+emoji: ♟️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Agentic Chess
 
 React frontend + FastAPI backend chess application with drag-and-drop moves, named players, AI mode, and fullscreen board support.
