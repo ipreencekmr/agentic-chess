@@ -12,6 +12,8 @@ pinned: false
 
 React frontend + FastAPI backend chess application with drag-and-drop moves, named players, AI mode, and fullscreen board support.
 
+<img width="1917" height="948" alt="image" src="https://github.com/user-attachments/assets/2bc8520b-cf5f-469d-85cd-453876025444" />
+
 ## Project Structure
 
 - `backend/` FastAPI API and chess engine orchestration
