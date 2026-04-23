@@ -1,41 +1,71 @@
-import axios from "axios";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
-  timeout: 10000
-});
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+const TIMEOUT = 10000;
+
+async function fetchWithTimeout(resource, options = {}) {
+  const { timeout = TIMEOUT } = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(resource, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 
 export async function startGame(payload) {
-  const { data } = await api.post("/game/start", payload);
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/game/start`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
 }
+
 
 export async function getHealth() {
-  const { data } = await api.get("/health");
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/health`);
 }
+
 
 export async function getGame(gameId) {
-  const { data } = await api.get(`/game/${gameId}`);
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/game/${gameId}`);
 }
+
 
 export async function move(gameId, moveUci) {
-  const { data } = await api.post(`/game/${gameId}/move`, { move: moveUci });
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/game/${gameId}/move`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ move: moveUci })
+  });
 }
+
 
 export async function agentMove(gameId) {
-  const { data } = await api.post(`/game/${gameId}/agent-move`);
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/game/${gameId}/agent-move`, {
+    method: "POST"
+  });
 }
+
 
 export async function reset(gameId) {
-  const { data } = await api.post(`/game/${gameId}/reset`);
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/game/${gameId}/reset`, {
+    method: "POST"
+  });
 }
 
+
 export async function undo(gameId) {
-  const { data } = await api.post(`/game/${gameId}/undo`);
-  return data;
+  return await fetchWithTimeout(`${BASE_URL}/game/${gameId}/undo`, {
+    method: "POST"
+  });
 }
