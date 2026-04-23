@@ -1,6 +1,6 @@
 ---
 title: Agentic Chess
-emoji: ♟️
+emoji: chess
 colorFrom: blue
 colorTo: green
 sdk: docker
@@ -10,7 +10,11 @@ pinned: false
 
 # Agentic Chess
 
-React frontend + FastAPI backend chess application with drag-and-drop moves, named players, AI mode, and fullscreen board support.
+React frontend + FastAPI backend chess application with multiple AI difficulty modes, desktop drag play, mobile tap-to-move, and fullscreen board support.
+
+## Live Demo
+
+- Hugging Face Space: `https://huggingface.co/spaces/ipreencekmr/agentic-chess`
 
 <img width="1917" height="948" alt="image" src="https://github.com/user-attachments/assets/2bc8520b-cf5f-469d-85cd-453876025444" />
 
@@ -23,6 +27,30 @@ React frontend + FastAPI backend chess application with drag-and-drop moves, nam
 - `docker-compose.yml` local multi-container orchestration
 - `Dockerfile` Hugging Face Docker Space image (frontend + backend in one container)
 - `.github/workflows/deploy-huggingface-space.yml` GitHub Actions deployment workflow
+
+## Game Modes and Difficulty
+
+- `Single Player`
+- `Multiplayer`
+
+Single Player difficulty options:
+- `Easy` (random legal move)
+- `Capture Priority` (prefer captures, else random legal move)
+- `AI Agent` (LLM-powered move using selected model)
+- `Hard (Engine)` (Stockfish-powered move)
+
+Notes:
+- `AI Agent` option appears only when backend has `OPENAI_API_KEY` available.
+- `Easy` and `Capture Priority` do not use OpenAI even if key is present.
+- In Single Player, your move is shown first, then agent move is called as a second step.
+- Changing difficulty starts a fresh game automatically.
+
+## Controls and UX
+
+- Desktop: drag-and-drop piece movement
+- Mobile/tablet: tap-to-move (tap source square, then destination square)
+- Piece movement animation: `1.5s`
+- Fullscreen board supported
 
 ## Run Locally (Non-Docker)
 
@@ -43,10 +71,17 @@ npm run dev
 
 Frontend runs at `http://localhost:5173` and proxies `/api` to `http://localhost:8000`.
 
-For `Hard (Engine)` difficulty on local machine, install Stockfish and ensure either:
+Optional environment variables:
 
-- `stockfish` is available on your system `PATH`, or
-- set `STOCKFISH_PATH` environment variable to the engine binary path.
+```bash
+OPENAI_API_KEY=
+STOCKFISH_PATH=
+CHESS_ENGINE_MOVE_TIME=0.8
+```
+
+Notes:
+- `.env` is auto-loaded by backend startup.
+- `CHESS_ENGINE_MOVE_TIME` is clamped to `0.1` - `5.0` seconds.
 
 ## Run With Docker Compose
 
@@ -69,10 +104,7 @@ docker compose up --build
 Optional engine tuning:
 
 ```bash
-# path to Stockfish binary if not on PATH
 STOCKFISH_PATH=/usr/games/stockfish
-
-# think time per move in seconds (0.1 to 5.0)
 CHESS_ENGINE_MOVE_TIME=0.8
 ```
 
