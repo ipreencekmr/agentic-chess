@@ -8,7 +8,7 @@ import { useChessGame } from "./hooks/useChessGame";
 import { getHealth } from "./services/gameApi";
 
 const MODES = ["Single Player", "Multiplayer"];
-const DIFFICULTIES = ["Easy", "Capture Priority", "AI Agent", "Hard (Engine)"];
+const DIFFICULTIES = ["Easy", "Medium", "Hard", "Capture Priority", "AI Agent"];
 const AI_MODELS = ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1", "gpt-4o"];
 
 export default function App() {

@@ -2,10 +2,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 GameMode = Literal["Single Player", "Multiplayer"]
-Difficulty = Literal["Easy", "Capture Priority", "AI Agent", "Hard (Engine)"]
-
+Difficulty = Literal["Easy", "Medium", "Hard", "Capture Priority", "AI Agent"]
 
 class StartGameRequest(BaseModel):
     mode: GameMode = "Single Player"
