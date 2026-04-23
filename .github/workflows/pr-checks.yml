@@ -6,6 +6,27 @@ on:
       - main
 
 jobs:
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Extract YAML front-matter from README
+        run: |
+          awk 'NR==1 && $0=="---" {flag=1; next}
+               flag && $0=="---" {flag=0; exit}
+               flag {print}' README.md > readme_meta.yml
+
+          echo "Extracted YAML:"
+          cat readme_meta.yml
+
+      - name: Lint extracted YAML
+        run: yamllint readme_meta.yml
+
   docker-build-and-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 20
