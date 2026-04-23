@@ -14,9 +14,10 @@ def _normalize_name(name: str, fallback: str) -> str:
 
 
 class ChessGame:
-    def __init__(self, mode: str, difficulty: str, white_name: str, black_name: str):
+    def __init__(self, mode: str, difficulty: str, ai_model: str, white_name: str, black_name: str):
         self.mode = mode
         self.difficulty = difficulty
+        self.ai_model = ai_model
         self.white_name = _normalize_name(white_name, "White")
         black_default = "Computer" if mode == "Single Player" else "Black"
         self.black_name = _normalize_name(black_name, black_default)
@@ -53,6 +54,7 @@ class ChessGame:
             "game_id": game_id,
             "mode": self.mode,
             "difficulty": self.difficulty,
+            "ai_model": self.ai_model,
             "white_name": self.white_name,
             "black_name": self.black_name,
             "turn_name": self.turn_name,
@@ -109,7 +111,7 @@ class ChessGame:
         if self.mode != "Single Player" or self.board.is_game_over() or self.board.turn != chess.BLACK:
             return
 
-        move_uci, warning = choose_ai_move(self.board, self.difficulty)
+        move_uci, warning = choose_ai_move(self.board, self.difficulty, self.ai_model)
         if warning:
             self.error = warning
         if move_uci and self.push_move(move_uci):
@@ -121,9 +123,17 @@ class GameStore:
         self._lock = threading.Lock()
         self._games: dict[str, ChessGame] = {}
 
-    def create(self, mode: str, difficulty: str, white_name: str, black_name: str) -> tuple[str, ChessGame]:
+    def create(
+        self, mode: str, difficulty: str, ai_model: str, white_name: str, black_name: str
+    ) -> tuple[str, ChessGame]:
         game_id = str(uuid.uuid4())
-        game = ChessGame(mode=mode, difficulty=difficulty, white_name=white_name, black_name=black_name)
+        game = ChessGame(
+            mode=mode,
+            difficulty=difficulty,
+            ai_model=ai_model,
+            white_name=white_name,
+            black_name=black_name,
+        )
         with self._lock:
             self._games[game_id] = game
         return game_id, game

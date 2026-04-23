@@ -10,6 +10,11 @@ export async function startGame(payload) {
   return data;
 }
 
+export async function getHealth() {
+  const { data } = await api.get("/health");
+  return data;
+}
+
 export async function getGame(gameId) {
   const { data } = await api.get(`/game/${gameId}`);
   return data;
@@ -17,6 +22,11 @@ export async function getGame(gameId) {
 
 export async function move(gameId, moveUci) {
   const { data } = await api.post(`/game/${gameId}/move`, { move: moveUci });
+  return data;
+}
+
+export async function agentMove(gameId) {
+  const { data } = await api.post(`/game/${gameId}/agent-move`);
   return data;
 }
 

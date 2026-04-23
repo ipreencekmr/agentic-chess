@@ -1,6 +1,7 @@
 export function GameControls({
   modes,
   difficulties,
+  aiModels,
   settings,
   blackLabel,
   loading,
@@ -45,6 +46,23 @@ export function GameControls({
         </select>
       </label>
 
+      {settings.mode === "Single Player" && settings.difficulty === "AI Agent" ? (
+        <label>
+          AI Agent Model
+          <select
+            value={settings.aiModel}
+            disabled={loading}
+            onChange={(event) => setField("aiModel", event.target.value)}
+          >
+            {aiModels.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       <label>
         White Player Name
         <input
@@ -79,4 +97,3 @@ export function GameControls({
     </div>
   );
 }
-

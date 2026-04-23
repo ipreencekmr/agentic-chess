@@ -43,6 +43,11 @@ npm run dev
 
 Frontend runs at `http://localhost:5173` and proxies `/api` to `http://localhost:8000`.
 
+For `Hard (Engine)` difficulty on local machine, install Stockfish and ensure either:
+
+- `stockfish` is available on your system `PATH`, or
+- set `STOCKFISH_PATH` environment variable to the engine binary path.
+
 ## Run With Docker Compose
 
 ```bash
@@ -59,6 +64,16 @@ Optional OpenAI key:
 # PowerShell
 $env:OPENAI_API_KEY="sk-..."
 docker compose up --build
+```
+
+Optional engine tuning:
+
+```bash
+# path to Stockfish binary if not on PATH
+STOCKFISH_PATH=/usr/games/stockfish
+
+# think time per move in seconds (0.1 to 5.0)
+CHESS_ENGINE_MOVE_TIME=0.8
 ```
 
 ## Hugging Face Space Deployment (via GitHub Actions)
