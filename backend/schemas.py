@@ -4,12 +4,13 @@ from pydantic import BaseModel, Field
 
 
 GameMode = Literal["Single Player", "Multiplayer"]
-Difficulty = Literal["Easy", "Capture Priority"]
+Difficulty = Literal["Easy", "Capture Priority", "AI Agent", "Hard (Engine)"]
 
 
 class StartGameRequest(BaseModel):
     mode: GameMode = "Single Player"
     difficulty: Difficulty = "Easy"
+    ai_model: str = Field(default="gpt-4o-mini", max_length=60)
     white_name: str = Field(default="White", max_length=40)
     black_name: str = Field(default="Black", max_length=40)
 
@@ -22,6 +23,7 @@ class GameStateResponse(BaseModel):
     game_id: str
     mode: GameMode
     difficulty: Difficulty
+    ai_model: str
     white_name: str
     black_name: str
     turn_name: str
@@ -33,4 +35,3 @@ class GameStateResponse(BaseModel):
     legal_moves: list[str]
     move_history: list[str]
     is_game_over: bool
-
