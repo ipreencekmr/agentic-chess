@@ -18,6 +18,8 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 
 <img width="1917" height="948" alt="image" src="https://github.com/user-attachments/assets/2bc8520b-cf5f-469d-85cd-453876025444" />
 
+<img width="1918" height="941" alt="image" src="https://github.com/user-attachments/assets/35138ec2-e519-48ab-8790-6199939c4768" />
+
 ## Project Structure
 
 - `backend/` FastAPI API and chess engine orchestration

@@ -1,8 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
+from .ai import is_openai_ready
 from .game import GameStore
 from .schemas import GameStateResponse, MoveRequest, StartGameRequest
+
+load_dotenv()
 
 app = FastAPI(title="Agentic Chess API", version="1.0.0")
 
@@ -26,14 +30,18 @@ def _get_game_or_404(game_id: str):
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True}
+    return {"ok": True, "openai_available": is_openai_ready()}
 
 
 @app.post("/api/game/start", response_model=GameStateResponse)
 def start_game(payload: StartGameRequest) -> dict:
+    if payload.difficulty == "AI Agent" and not is_openai_ready():
+        raise HTTPException(status_code=400, detail="AI Agent mode is unavailable because OPENAI_API_KEY is not set.")
+
     game_id, game = store.create(
         mode=payload.mode,
         difficulty=payload.difficulty,
+        ai_model=payload.ai_model,
         white_name=payload.white_name,
         black_name=payload.black_name,
     )
@@ -54,6 +62,16 @@ def move(game_id: str, payload: MoveRequest) -> dict:
         return game.to_payload(game_id)
 
     if not game.push_move(payload.move):
+        return game.to_payload(game_id)
+
+    return game.to_payload(game_id)
+
+
+@app.post("/api/game/{game_id}/agent-move", response_model=GameStateResponse)
+def agent_move(game_id: str) -> dict:
+    game = _get_game_or_404(game_id)
+    if game.board.is_game_over():
+        game.error = "Game is already over."
         return game.to_payload(game_id)
 
     game.maybe_play_ai()
