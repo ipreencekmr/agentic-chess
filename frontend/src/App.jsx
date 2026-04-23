@@ -1,18 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AppShell } from "./components/layout/AppShell";
 import { ChessBoardPanel } from "./components/chess/ChessBoardPanel";
 import { GameControls } from "./components/chess/GameControls";
 import { StatusPanel } from "./components/chess/StatusPanel";
 import { useChessGame } from "./hooks/useChessGame";
+import { getHealth } from "./services/gameApi";
 
 const MODES = ["Single Player", "Multiplayer"];
-const DIFFICULTIES = ["Easy", "Capture Priority"];
+const DIFFICULTIES = ["Easy", "Capture Priority", "AI Agent", "Hard (Engine)"];
+const AI_MODELS = ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1", "gpt-4o"];
 
 export default function App() {
+  const prevDifficultyRef = useRef("Easy");
+  const [openAiAvailable, setOpenAiAvailable] = useState(false);
   const [settings, setSettings] = useState({
     mode: "Single Player",
     difficulty: "Easy",
+    aiModel: "gpt-4o-mini",
     whiteName: "White",
     blackName: "Black"
   });
@@ -32,6 +37,30 @@ export default function App() {
     if (settings.mode === "Single Player") return "Black Player Name (default: Computer)";
     return "Black Player Name";
   }, [settings.mode]);
+  const difficulties = useMemo(
+    () => DIFFICULTIES.filter((difficulty) => openAiAvailable || difficulty !== "AI Agent"),
+    [openAiAvailable]
+  );
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const health = await getHealth();
+        if (active) setOpenAiAvailable(Boolean(health?.openai_available));
+      } catch {
+        if (active) setOpenAiAvailable(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (openAiAvailable || settings.difficulty !== "AI Agent") return;
+    setSettings((current) => ({ ...current, difficulty: "Easy" }));
+  }, [openAiAvailable, settings.difficulty]);
 
   useEffect(() => {
     if (game?.is_game_over) {
@@ -41,6 +70,17 @@ export default function App() {
     }
   }, [game?.is_game_over, game?.status]);
 
+  useEffect(() => {
+    const previousDifficulty = prevDifficultyRef.current;
+    prevDifficultyRef.current = settings.difficulty;
+
+    if (previousDifficulty === settings.difficulty) return;
+    if (!game?.game_id) return;
+
+    setShowResultDialog(false);
+    void startGame(settings);
+  }, [game?.game_id, settings, startGame]);
+
   return (
     <>
       <AppShell
@@ -48,7 +88,8 @@ export default function App() {
         controls={
           <GameControls
             modes={MODES}
-            difficulties={DIFFICULTIES}
+            difficulties={difficulties}
+            aiModels={AI_MODELS}
             settings={settings}
             blackLabel={blackLabel}
             loading={loading}
@@ -61,6 +102,7 @@ export default function App() {
         board={
           <ChessBoardPanel
             fen={game?.fen}
+            lastMove={game?.last_move}
             turnName={game?.turn_name}
             mode={game?.mode}
             onMove={movePiece}
