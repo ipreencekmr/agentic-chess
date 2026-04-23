@@ -1,6 +1,6 @@
 ---
 title: Agentic Chess
-emoji: chess
+emoji:♟️
 colorFrom: blue
 colorTo: green
 sdk: docker
