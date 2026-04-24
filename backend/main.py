@@ -1,7 +1,10 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
+from .stockfish_engine import verify_stockfish
 from .ai import is_openai_ready
 from .game import GameStore
 from .schemas import GameStateResponse, MoveRequest, StartGameRequest
@@ -20,18 +23,22 @@ app.add_middleware(
 
 store = GameStore()
 
-
 def _get_game_or_404(game_id: str):
     game = store.get(game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Game not found.")
     return game
 
+@app.on_event("startup")
+def startup_event():
+    path = os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
+    print(f"Verifying Stockfish at: {path}")
+    verify_stockfish(path)
+    print(f"[OK] Stockfish verified at {path}")
 
 @app.get("/api/health")
 def health() -> dict:
     return {"ok": True, "openai_available": is_openai_ready()}
-
 
 @app.post("/api/game/start", response_model=GameStateResponse)
 def start_game(payload: StartGameRequest) -> dict:

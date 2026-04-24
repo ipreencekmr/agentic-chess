@@ -6,7 +6,7 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       STOCKFISH_PATH: ${STOCKFISH_PATH:-}
-      CHESS_ENGINE_MOVE_TIME: ${CHESS_ENGINE_MOVE_TIME:-0.8}
+      CHESS_ENGINE_MOVE_TIME: ${CHESS_ENGINE_MOVE_TIME:-1500}
     expose:
       - "8000"
     healthcheck:

@@ -1,7 +1,7 @@
 import os
 import random
 import chess
-from stockfish import Stockfish
+from .stockfish_engine import get_stockfish
 
 try:
     from openai import OpenAI
@@ -28,19 +28,23 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
     if not legal_moves:
         return None, "No legal moves available."
 
+    move_time_ms = int(os.getenv("CHESS_ENGINE_MOVE_TIME", "800"))
+
     # Stockfish for Easy, Medium, Hard
     stockfish_difficulties = {
-        "Easy": {"skill_level": 1},
-        "Medium": {"skill_level": 8},
-        "Hard": {"skill_level": 20},
+        "Easy": {"skill_level": 1, "depth": 1, "time_per_move": move_time_ms or 200},
+        "Medium": {"skill_level": 8, "depth": 8, "time_per_move": move_time_ms or 800},
+        "Hard": {"skill_level": 20, "depth": 20, "time_per_move": move_time_ms or 2000},
     }
     if difficulty in stockfish_difficulties:
         try:
             params = stockfish_difficulties[difficulty]
-            stockfish = Stockfish()
+            stockfish = get_stockfish()
             stockfish.set_fen_position(board.fen())
+            stockfish.set_depth(params["depth"])
             stockfish.set_skill_level(params["skill_level"])
-            move_uci = stockfish.get_best_move()
+
+            move_uci = stockfish.get_best_move(params["time_per_move"])
             if move_uci and chess.Move.from_uci(move_uci) in legal_moves:
                 return move_uci, None
             move = _capture_priority_move(board, legal_moves)
