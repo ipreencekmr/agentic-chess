@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from .stockfish_engine import verify_stockfish
+from .engine import StockfishService
 from .ai import is_openai_ready
 from .game import GameStore
 from .schemas import GameStateResponse, MoveRequest, StartGameRequest
@@ -32,9 +32,11 @@ def _get_game_or_404(game_id: str):
 @app.on_event("startup")
 def startup_event():
     path = os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
-    print(f"Verifying Stockfish at: {path}")
-    verify_stockfish(path)
-    print(f"[OK] Stockfish verified at {path}")
+    StockfishService.getInstance()
+
+@app.on_event("shutdown")
+def shutdown_event():
+    StockfishService.shutdown()
 
 @app.get("/api/health")
 def health() -> dict:
