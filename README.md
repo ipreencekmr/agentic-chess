@@ -31,6 +31,7 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 - `docker-compose.yml` local multi-container orchestration
 - `Dockerfile` Hugging Face Docker Space image (frontend + backend in one container)
 - `.github/workflows/deploy-huggingface-space.yml` GitHub Actions deployment workflow
+- `.github/workflows/readme-agent.yml` GitHub Actions workflow for automated README updates
 
 ## Game Modes and Difficulty
 
@@ -40,8 +41,8 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 Single Player difficulty options:
 - `Easy` (random legal move)
 - `Capture Priority` (prefer captures, else random legal move)
-- `AI Agent` (LLM-powered move using selected model)
-- `Hard (Engine)` (Stockfish-powered move)
+- `AI Agent` (LLM-powered move using selected model with Langchain tracing)
+- `Hard (Engine)` (Stockfish-powered move with skill levels and depth tuning)
 
 Notes:
 - `AI Agent` option appears only when backend has `OPENAI_API_KEY` available.
@@ -80,12 +81,17 @@ Optional environment variables:
 ```bash
 OPENAI_API_KEY=
 STOCKFISH_PATH=
-CHESS_ENGINE_MOVE_TIME=0.8
+CHESS_ENGINE_MOVE_TIME=
+LANGCHAIN_API_KEY=
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_PROJECT=
 ```
 
 Notes:
 - `.env` is auto-loaded by backend startup.
-- `CHESS_ENGINE_MOVE_TIME` is clamped to `0.1` - `5.0` seconds.
+- `CHESS_ENGINE_MOVE_TIME` is in milliseconds and clamped to `100` - `5000` ms.
+- `STOCKFISH_PATH` must point to a valid Stockfish binary.
+- Langchain tracing environment variables enable detailed AI agent tracing.
 
 ## Run With Docker Compose
 
@@ -109,7 +115,7 @@ Optional engine tuning:
 
 ```bash
 STOCKFISH_PATH=/usr/games/stockfish
-CHESS_ENGINE_MOVE_TIME=0.8
+CHESS_ENGINE_MOVE_TIME=1500
 ```
 
 ## Hugging Face Space Deployment (via GitHub Actions)
@@ -140,3 +146,6 @@ In GitHub repo settings, add:
 
 - In browser builds, frontend API base defaults to `/api`.
 - Override API base manually with `VITE_API_BASE_URL` if needed.
+- Backend now uses a singleton `StockfishService` for engine management with skill level and depth tuning.
+- AI Agent moves are powered by a Langchain-traced tool-enabled approach for better move selection and observability.
+- New GitHub Actions workflow `.github/workflows/readme-agent.yml` automates README updates on code changes.
