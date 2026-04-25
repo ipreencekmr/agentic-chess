@@ -1,0 +1,44 @@
+name: Auto Update README
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-readme:
+    if: "!contains(github.event.head_commit.message, 'feat(readme): auto update README')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          pip install openai langsmith gitpython
+
+      - name: Run agent
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
+        run: python scripts/readme_agent.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "feat(readme): auto update README"
+          branch: auto/readme-update-${{ github.run_id }}
+          title: "Auto: Update README based on code changes"
+          body: "Automated README update via agent"
+          add-paths: README.md
