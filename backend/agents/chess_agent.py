@@ -1,6 +1,8 @@
 import json
 from backend.tools.chess_tools import get_best_move_tool
+from langsmith import traceable
 
+@traceable(name="chess-agent")
 def run_chess_agent(client, model, fen, legal_moves):
     tools = [
         {

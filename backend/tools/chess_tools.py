@@ -1,5 +1,7 @@
 from backend.engine import StockfishService
+from langsmith import traceable
 
+@traceable(name="stockfish-best-move")
 def get_best_move_tool(fen: str, depth: int = 12):
     engine = StockfishService.getInstance()
     return engine.get_best_move(fen=fen, depth=depth)
