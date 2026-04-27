@@ -55,8 +55,10 @@ Notes:
 
 - Desktop: drag-and-drop piece movement
 - Mobile/tablet: tap-to-move (tap source square, then destination square)
-- Piece movement animation: `1.5s`
+- Piece movement animation: `0.5s` (reduced from 2s for smoother UX)
 - Fullscreen board supported
+- Visual check indicator: red pulsing highlight on king's square when in check
+- Mobile tap-to-move shows selected piece highlight and legal move dots
 
 ## Run Locally (Non-Docker)
 
@@ -156,4 +158,9 @@ In GitHub repo settings, add:
 - Override API base manually with `VITE_API_BASE_URL` if needed.
 - Backend now uses a singleton `StockfishService` for engine management with skill level and depth tuning.
 - AI Agent moves are powered by a Langchain-traced tool-enabled approach for better move selection and observability.
-- New GitHub Actions workflow `.github/workflows/readme-agent.yml` automates README updates on code changes.
+- New GitHub Actions workflow `.github/workflows/readme-agent.yml` automates README updates on code changes and adds `ai-generated` label to PRs.
+- Default `STOCKFISH_PATH` in Docker Compose is set to `/usr/games/stockfish`.
+- Piece promotion logic fixed to avoid king drag triggering promotion flow.
+- Check state is visually indicated on the board with a red pulse on the king's square.
+- Mobile tap-to-move UX improved with selected piece highlight and legal move dots.
+- Piece movement animation duration reduced to 0.5 seconds for smoother gameplay experience.
