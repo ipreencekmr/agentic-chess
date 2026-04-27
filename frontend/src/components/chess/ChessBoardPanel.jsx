@@ -13,8 +13,11 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
 
   const position = fen || "start";
 
+  // FIX 1: Guard against non-pawn pieces so king drags never trigger promotion flow
   const isPromotionMove = (sourceSquare, targetSquare, piece) => {
     if (!piece || !sourceSquare || !targetSquare) return false;
+    // Only pawns can promote — explicitly exclude kings and all other pieces
+    if (!piece.endsWith("P")) return false;
     const fileDistance = Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0));
     return (
       ((piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
@@ -39,6 +42,8 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
 
   const onPieceDrop = (sourceSquare, targetSquare, piece) => {
     if (disabled) return false;
+
+    // FIX 1 continued: promotion check now correctly ignores king/castling moves
     if (isPromotionMove(sourceSquare, targetSquare, piece)) {
       return true;
     }
@@ -162,12 +167,28 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
   );
   const customSquareStyles = useMemo(() => {
     if (!isMobile || !selectedSquare) return {};
-    return {
+
+    // FIX 3: Highlight valid castling destination squares for the selected king
+    const styles = {
       [selectedSquare]: {
         boxShadow: "inset 0 0 0 4px rgba(31, 95, 214, 0.92)"
       }
     };
-  }, [isMobile, selectedSquare]);
+
+    try {
+      const temp = new Chess(position === "start" ? undefined : fen);
+      const legalMoves = temp.moves({ square: selectedSquare, verbose: true });
+      for (const m of legalMoves) {
+        styles[m.to] = {
+          background: "radial-gradient(circle, rgba(31,95,214,0.25) 36%, transparent 40%)"
+        };
+      }
+    } catch {
+      // ignore
+    }
+
+    return styles;
+  }, [isMobile, selectedSquare, fen, position]);
 
   const handleSquareClick = (square) => {
     if (!isMobile || disabled) return;
@@ -193,8 +214,20 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
       return;
     }
 
-    if (piece && piece.color === turn) {
+    // FIX 3: Check if a legal move exists from selectedSquare → square BEFORE
+    // deciding to re-select. This fixes castling: tapping g1 (where the rook sits)
+    // should castle, not re-select the rook.
+    const legalMoves = temp.moves({ square: selectedSquare, verbose: true });
+    const isLegalTarget = legalMoves.some((m) => m.to === square);
+
+    if (!isLegalTarget && piece && piece.color === turn) {
+      // No legal move to this square, but it's our own piece — re-select it
       setSelectedSquare(square);
+      return;
+    }
+
+    if (!isLegalTarget) {
+      setSelectedSquare(null);
       return;
     }
 
@@ -208,7 +241,10 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
       promotion
     });
 
-    if (!move) return;
+    if (!move) {
+      setSelectedSquare(null);
+      return;
+    }
 
     submitMove(move.from + move.to + (move.promotion || ""));
     setSelectedSquare(null);
@@ -238,7 +274,7 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
           customBoardStyle={customBoardStyle}
           customSquareStyles={customSquareStyles}
           arePiecesDraggable={!disabled && !isMobile}
-          animationDuration={2000}
+          animationDuration={500} // FIX 2: was 2000ms — reduced to 500ms so board isn't locked
         />
       </div>
     </div>
