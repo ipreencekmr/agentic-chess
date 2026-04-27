@@ -42,3 +42,4 @@ jobs:
           title: "Auto: Update README based on code changes"
           body: "Automated README update via agent"
           add-paths: README.md
+          labels: ai-generated
