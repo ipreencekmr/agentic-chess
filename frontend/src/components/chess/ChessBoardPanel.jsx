@@ -165,30 +165,63 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
     }),
     []
   );
-  const customSquareStyles = useMemo(() => {
-    if (!isMobile || !selectedSquare) return {};
-
-    // FIX 3: Highlight valid castling destination squares for the selected king
-    const styles = {
-      [selectedSquare]: {
-        boxShadow: "inset 0 0 0 4px rgba(31, 95, 214, 0.92)"
-      }
-    };
-
+  // Derive check state and king square directly from FEN using chess.js —
+  // no backend change needed since board.is_check() mirrors chess.js inCheck().
+  const checkSquare = useMemo(() => {
+    if (!fen || fen === "start") return null;
     try {
-      const temp = new Chess(position === "start" ? undefined : fen);
-      const legalMoves = temp.moves({ square: selectedSquare, verbose: true });
-      for (const m of legalMoves) {
-        styles[m.to] = {
-          background: "radial-gradient(circle, rgba(31,95,214,0.25) 36%, transparent 40%)"
-        };
+      const temp = new Chess(fen);
+      if (!temp.inCheck()) return null;
+      const turn = temp.turn(); // "w" or "b"
+      // Find the king square for the side in check
+      for (const square of temp.board().flat()) {
+        if (square && square.type === "k" && square.color === turn) {
+          return square.square;
+        }
       }
     } catch {
       // ignore
     }
+    return null;
+  }, [fen]);
+
+  const customSquareStyles = useMemo(() => {
+    const styles = {};
+
+    // Red pulse on the king's square when in check — always active, not just mobile
+    if (checkSquare) {
+      styles[checkSquare] = {
+        background: "radial-gradient(circle, rgba(220,38,38,0.85) 0%, rgba(220,38,38,0.4) 60%, transparent 80%)",
+        boxShadow: "inset 0 0 0 3px rgba(220,38,38,0.9)"
+      };
+    }
+
+    // Mobile tap-to-move: selected piece and legal move dots
+    if (isMobile && selectedSquare) {
+      // Selected square — blue ring (overrides check highlight if king is selected while in check)
+      styles[selectedSquare] = {
+        ...(styles[selectedSquare] || {}),
+        boxShadow: "inset 0 0 0 4px rgba(31, 95, 214, 0.92)"
+      };
+
+      try {
+        const temp = new Chess(position === "start" ? undefined : fen);
+        const legalMoves = temp.moves({ square: selectedSquare, verbose: true });
+        for (const m of legalMoves) {
+          // Don't overwrite the check highlight with a plain dot if destination is the check square
+          if (!styles[m.to]) {
+            styles[m.to] = {
+              background: "radial-gradient(circle, rgba(31,95,214,0.25) 36%, transparent 40%)"
+            };
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
 
     return styles;
-  }, [isMobile, selectedSquare, fen, position]);
+  }, [checkSquare, isMobile, selectedSquare, fen, position]);
 
   const handleSquareClick = (square) => {
     if (!isMobile || disabled) return;
