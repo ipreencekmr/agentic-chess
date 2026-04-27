@@ -39,14 +39,15 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 - `Multiplayer`
 
 Single Player difficulty options:
-- `Easy` (random legal move)
+- `Easy` - level 1 
+- `Medium` - level 8
+- `Hard` - level 20
 - `Capture Priority` (prefer captures, else random legal move)
 - `AI Agent` (LLM-powered move using selected model with Langchain tracing)
-- `Hard (Engine)` (Stockfish-powered move with skill levels and depth tuning)
 
 Notes:
 - `AI Agent` option appears only when backend has `OPENAI_API_KEY` available.
-- `Easy` and `Capture Priority` do not use OpenAI even if key is present.
+- `Easy`, `Medium`, `Hard` and `Capture Priority` do not use OpenAI even if key is present.
 - In Single Player, your move is shown first, then agent move is called as a second step.
 - Changing difficulty starts a fresh game automatically.
 
@@ -113,8 +114,15 @@ docker compose up --build
 
 Optional engine tuning:
 
+For Linux
 ```bash
 STOCKFISH_PATH=/usr/games/stockfish
+CHESS_ENGINE_MOVE_TIME=1500
+```
+
+For Mac (Homebrew)
+```bash
+STOCKFISH_PATH=/opt/homebrew/bin/stockfish
 CHESS_ENGINE_MOVE_TIME=1500
 ```
 
