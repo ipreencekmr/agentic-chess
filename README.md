@@ -24,6 +24,16 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 
 <img width="1917" height="940" alt="image" src="https://github.com/user-attachments/assets/eab80a46-ce79-481e-afd3-8088729ab080" />
 
+## Docker Compose 
+
+<img width="1023" height="336" alt="Screenshot 2026-04-28 at 8 17 46 PM" src="https://github.com/user-attachments/assets/c85b0d6d-819e-4834-984b-191cdba2e221" />
+
+## API Tracing using Jaeger
+
+<img width="1470" height="605" alt="Screenshot 2026-04-28 at 8 19 46 PM" src="https://github.com/user-attachments/assets/e38178f2-4858-492c-a2c0-d2791347239c" />
+
+<img width="1470" height="584" alt="Screenshot 2026-04-28 at 8 19 12 PM" src="https://github.com/user-attachments/assets/da72451e-21c9-416e-9ec1-ab70655c269d" />
+
 ## Project Structure
 
 - `backend/` FastAPI API and chess engine orchestration

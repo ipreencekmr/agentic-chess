@@ -1,4 +1,19 @@
 services:
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: chess-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"   # enable OTLP gRPC receiver on :4317
+    ports:
+      - "16686:16686"   # Jaeger UI  → http://localhost:16686
+      - "4317:4317"     # OTLP gRPC  ← backend sends spans here
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -10,8 +25,15 @@ services:
       LANGCHAIN_API_KEY: ${LANGCHAIN_API_KEY:-}
       LANGCHAIN_TRACING_V2: ${LANGCHAIN_TRACING_V2:-true}
       LANGCHAIN_PROJECT: ${LANGCHAIN_PROJECT:-}
+      # OpenTelemetry — points to the jaeger service above
+      OTEL_ENABLED: ${OTEL_ENABLED:-true}
+      OTEL_SERVICE_NAME: agentic-chess
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
     expose:
       - "8000"
+    depends_on:
+      jaeger:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health').read()"]
       interval: 20s
