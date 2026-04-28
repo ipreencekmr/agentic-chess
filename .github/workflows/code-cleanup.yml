@@ -72,24 +72,24 @@ jobs:
         id: pr_body
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
-          delimiter="$(openssl rand -hex 16)"
-          {
-            echo "BODY<<${delimiter}"
-            cat pr_body.md
-            echo "${delimiter}"
-          } >> "$GITHUB_OUTPUT"
+          if [ ! -s pr_body.md ]; then
+            echo "pr_body_path=" >> "$GITHUB_OUTPUT"
+            echo "[warn] pr_body.md is empty or missing — skipping PR body step"
+            exit 0
+          fi
+          echo "pr_body_path=pr_body.md" >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.pr_body.outputs.pr_body_path != '' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GH_PAT }}
           commit-message: "refactor: weekly automated code cleanup"
           branch: auto/code-cleanup-${{ github.run_id }}
           title: "Auto: Weekly Code Cleanup and Refactor"
-          body: ${{ steps.pr_body.outputs.BODY }}
+          body-path: pr_body.md
           add-paths: |
             backend/**
             frontend/src/**
           labels: ai-generated, refactor
-          draft: true  # Open as draft so a human reviews before merging
+          draft: true
