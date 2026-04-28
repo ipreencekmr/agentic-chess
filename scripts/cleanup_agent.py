@@ -137,6 +137,14 @@ def build_system_prompt() -> str:
         - Return ONLY the fully refactored file content, no markdown fences, no explanation.
         - If the file needs no changes, return it exactly as provided.
         - Never change public API signatures, exported names, or class/function contracts.
+        - NEVER rename public methods, classmethods, or module-level functions
+          that are imported by other files. If unsure whether a name is imported
+          elsewhere, keep the original name exactly as-is.
+        - NEVER move a variable into an extracted helper function if that variable
+          is defined in the outer scope — either pass it as a parameter or keep
+          the logic inline.
+        - NEVER change modern Python union syntax (str | None, list[str]) to
+          legacy typing imports (Optional, List). The codebase targets Python 3.11+.
     """)
 
 
@@ -248,6 +256,10 @@ def main() -> None:
 
     client = OpenAI(api_key=api_key)
 
+    DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
+    if DRY_RUN:
+        print("[dry-run] Mode enabled — no files will be written, no PR body produced.")
+
     # Load lint reports produced by the workflow's ESLint + Ruff steps
     print("[step] Loading lint reports...")
     eslint_data = load_json_report(ESLINT_REPORT)
@@ -292,8 +304,11 @@ def main() -> None:
             continue
 
         if was_changed:
-            path.write_text(refactored, encoding="utf-8")
-            print(f"  [updated] {rel}")
+            if DRY_RUN:
+                print(f"  [dry-run] Would update: {rel}")
+            else:
+                path.write_text(refactored, encoding="utf-8")
+                print(f"  [updated] {rel}")
             changed.append(path)
         else:
             print(f"  [no change] {rel}")
@@ -301,14 +316,20 @@ def main() -> None:
 
     # Write PR body for the create-pull-request action to consume
     pr_body = build_pr_body(changed, skipped, errors)
-    PR_BODY_PATH.write_text(pr_body, encoding="utf-8")
-    print(f"\n[done] PR body written to {PR_BODY_PATH.name}")
-    print(f"[done] {len(changed)} files updated, {len(skipped)} unchanged, {len(errors)} errors")
+    if DRY_RUN:
+        print("\n[dry-run] PR body preview:")
+        print(pr_body)
+        print(f"\n[dry-run] Summary: {len(changed)} would be updated, "
+            f"{len(skipped)} unchanged, {len(errors)} errors")
+    else:
+        PR_BODY_PATH.write_text(pr_body, encoding="utf-8")
+        print(f"\n[done] PR body written to {PR_BODY_PATH.name}")
+        print(f"[done] {len(changed)} files updated, "
+            f"{len(skipped)} unchanged, {len(errors)} errors")
 
     # Exit non-zero only on hard errors so the workflow can decide
     if errors and not changed:
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
