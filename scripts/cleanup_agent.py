@@ -272,6 +272,16 @@ def main() -> None:
 
     # Collect all source files in scope
     source_files = collect_source_files()
+
+    # --- temporary debug ---
+    print(f"[debug] REPO_ROOT      = {REPO_ROOT}")
+    print(f"[debug] backend exists = {(REPO_ROOT / 'backend').exists()}")
+    print(f"[debug] frontend/src   = {(REPO_ROOT / 'frontend' / 'src').exists()}")
+    print(f"[debug] files found    = {len(source_files)}")
+    for f in source_files:
+        print(f"  {f.relative_to(REPO_ROOT)}")
+    # --- end debug ---
+
     print(f"[step] Found {len(source_files)} source files to process")
 
     changed: list[Path] = []

@@ -4,3 +4,6 @@ frontend/node_modules/
 frontend/dist/
 .env
 venv/
+pr_body.md
+eslint-report.json
+ruff-report.json
