@@ -100,6 +100,7 @@ Notes:
 - Langchain tracing environment variables enable detailed AI agent tracing.
 - `CLEANUP_MODEL` sets the OpenAI model used for weekly automated code cleanup.
 - The weekly code cleanup workflow now supports a dry-run mode to preview changes without writing files or opening PRs.
+- The code cleanup workflow now reads `CLEANUP_MODEL` from GitHub Variables (`vars.CLEANUP_MODEL`) instead of secrets.
 
 ## Run With Docker Compose
 
