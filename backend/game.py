@@ -28,13 +28,16 @@ class ChessGame:
         self.ai_move: str | None = None
 
     def player_name(self, color: bool) -> str:
+        # Returns the player name for the given color
         return self.white_name if color == chess.WHITE else self.black_name
 
     @property
     def turn_name(self) -> str:
+        # Returns the name of the player whose turn it is
         return self.player_name(self.board.turn)
 
     def status(self) -> str:
+        # Returns a human-readable status string for the current board state
         if self.board.is_checkmate():
             winner = chess.WHITE if self.board.turn == chess.BLACK else chess.BLACK
             return f"Checkmate! {self.player_name(winner)} wins."
@@ -47,9 +50,11 @@ class ChessGame:
         return f"{self.turn_name}'s turn."
 
     def legal_moves(self) -> list[str]:
+        # Returns a list of legal moves in UCI format
         return [move.uci() for move in self.board.legal_moves]
 
     def to_payload(self, game_id: str) -> dict:
+        # Returns a dictionary representing the current game state
         return {
             "game_id": game_id,
             "mode": self.mode,
@@ -69,6 +74,7 @@ class ChessGame:
         }
 
     def reset(self) -> None:
+        # Resets the game to the initial state
         self.board.reset()
         self.move_history = []
         self.last_move = None
@@ -76,6 +82,7 @@ class ChessGame:
         self.ai_move = None
 
     def push_move(self, move_uci: str) -> bool:
+        # Attempts to push a move in UCI format; returns True if successful
         try:
             move = chess.Move.from_uci(move_uci.lower())
         except Exception:
@@ -93,6 +100,7 @@ class ChessGame:
         return True
 
     def undo(self) -> None:
+        # Undoes the last move, if possible
         if self.board.move_stack:
             self.board.pop()
             if self.move_history:
@@ -102,11 +110,13 @@ class ChessGame:
             self.ai_move = None
 
     def undo_turn(self) -> None:
+        # Undoes the last turn (player and AI move if in single player)
         self.undo()
         if self.mode == "Single Player" and self.board.move_stack and self.board.turn == chess.BLACK:
             self.undo()
 
     def maybe_play_ai(self) -> None:
+        # If it's the AI's turn, plays an AI move
         self.ai_move = None
         if self.mode != "Single Player" or self.board.is_game_over() or self.board.turn != chess.BLACK:
             return
@@ -126,6 +136,7 @@ class GameStore:
     def create(
         self, mode: str, difficulty: str, ai_model: str, white_name: str, black_name: str
     ) -> tuple[str, ChessGame]:
+        # Creates a new ChessGame and returns its ID and instance
         game_id = str(uuid.uuid4())
         game = ChessGame(
             mode=mode,
@@ -139,9 +150,11 @@ class GameStore:
         return game_id, game
 
     def get(self, game_id: str) -> ChessGame | None:
+        # Retrieves a ChessGame by its ID
         with self._lock:
             return self._games.get(game_id)
 
     def remove(self, game_id: str) -> None:
+        # Removes a ChessGame by its ID
         with self._lock:
             self._games.pop(game_id, None)

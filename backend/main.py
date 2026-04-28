@@ -31,7 +31,8 @@ def _get_game_or_404(game_id: str):
 
 @app.on_event("startup")
 def startup_event():
-    path = os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
+    # Ensure Stockfish path is set in environment, but do not use the value directly here
+    os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
     StockfishService.getInstance()
 
 @app.on_event("shutdown")

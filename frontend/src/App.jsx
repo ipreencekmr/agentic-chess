@@ -33,18 +33,22 @@ export default function App() {
     undoMove
   } = useChessGame();
 
+  // Memoize black player label based on mode
   const blackLabel = useMemo(() => {
     if (settings.mode === "Single Player") return "Black Player Name (default: Computer)";
     return "Black Player Name";
   }, [settings.mode]);
-  const difficulties = useMemo(
+
+  // Only show "AI Agent" difficulty if OpenAI is available
+  const availableDifficulties = useMemo(
     () => DIFFICULTIES.filter((difficulty) => openAiAvailable || difficulty !== "AI Agent"),
     [openAiAvailable]
   );
 
+  // Check OpenAI health on mount
   useEffect(() => {
     let active = true;
-    void (async () => {
+    (async () => {
       try {
         const health = await getHealth();
         if (active) setOpenAiAvailable(Boolean(health?.openai_available));
@@ -57,11 +61,13 @@ export default function App() {
     };
   }, []);
 
+  // If OpenAI becomes unavailable, revert from "AI Agent" difficulty
   useEffect(() => {
     if (openAiAvailable || settings.difficulty !== "AI Agent") return;
     setSettings((current) => ({ ...current, difficulty: "Easy" }));
   }, [openAiAvailable, settings.difficulty]);
 
+  // Show result dialog when game is over
   useEffect(() => {
     if (game?.is_game_over) {
       setShowResultDialog(true);
@@ -70,6 +76,7 @@ export default function App() {
     }
   }, [game?.is_game_over, game?.status]);
 
+  // Restart game if difficulty changes
   useEffect(() => {
     const previousDifficulty = prevDifficultyRef.current;
     prevDifficultyRef.current = settings.difficulty;
@@ -88,7 +95,7 @@ export default function App() {
         controls={
           <GameControls
             modes={MODES}
-            difficulties={difficulties}
+            difficulties={availableDifficulties}
             aiModels={AI_MODELS}
             settings={settings}
             blackLabel={blackLabel}

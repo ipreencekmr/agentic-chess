@@ -8,6 +8,20 @@ export function StatusPanel({ game, loading, requestError }) {
     );
   }
 
+  // Helper to render move history
+  function renderMoveHistory(moveHistory) {
+    if (moveHistory.length === 0) {
+      return <p>No moves yet.</p>;
+    }
+    return (
+      <ol className="history-list">
+        {moveHistory.map((move, idx) => (
+          <li key={`${move}-${idx}`}>{move}</li>
+        ))}
+      </ol>
+    );
+  }
+
   return (
     <div className="status-stack">
       <div className="status-card">
@@ -16,11 +30,11 @@ export function StatusPanel({ game, loading, requestError }) {
         <p>
           <strong>Turn:</strong> {game.turn_name}
         </p>
-        {game.ai_move ? (
+        {game.ai_move && (
           <p>
             <strong>AI Move:</strong> {game.ai_move}
           </p>
-        ) : null}
+        )}
       </div>
 
       <div className="status-card">
@@ -35,15 +49,7 @@ export function StatusPanel({ game, loading, requestError }) {
 
       <div className="status-card">
         <h3>Move History</h3>
-        {game.move_history.length === 0 ? (
-          <p>No moves yet.</p>
-        ) : (
-          <ol className="history-list">
-            {game.move_history.map((move, idx) => (
-              <li key={`${move}-${idx}`}>{move}</li>
-            ))}
-          </ol>
-        )}
+        {renderMoveHistory(game.move_history)}
       </div>
 
       {(game.error || requestError) && (
@@ -61,4 +67,3 @@ export function StatusPanel({ game, loading, requestError }) {
     </div>
   );
 }
-
