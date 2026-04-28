@@ -8,10 +8,13 @@ from .engine import StockfishService
 from .ai import is_openai_ready
 from .game import GameStore
 from .schemas import GameStateResponse, MoveRequest, StartGameRequest
+from .telemetry import setup_tracing  # ← new
 
 load_dotenv()
 
 app = FastAPI(title="Agentic Chess API", version="1.0.0")
+
+setup_tracing(app)
 
 app.add_middleware(
     CORSMiddleware,
