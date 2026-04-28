@@ -1,12 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-
 import App from "./App";
 import "./styles.css";
 
-createRoot(document.getElementById("root")).render(
+// Mount the root React component to the DOM
+const rootElement = document.getElementById("root");
+createRoot(rootElement).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
-

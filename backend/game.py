@@ -108,6 +108,7 @@ class ChessGame:
 
     def maybe_play_ai(self) -> None:
         self.ai_move = None
+        # Only play AI if in single player mode, game is not over, and it's black's turn
         if self.mode != "Single Player" or self.board.is_game_over() or self.board.turn != chess.BLACK:
             return
 
