@@ -1,8 +1,9 @@
 name: Auto Update README
 
 on:
-  push:
-    branches: [ main ]
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 permissions:
   contents: write
@@ -10,7 +11,8 @@ permissions:
 
 jobs:
   update-readme:
-    if: "!contains(github.event.head_commit.message, 'feat(readme): auto update README')"
+    if: |
+      github.event.pull_request.merged == true && !contains(github.event.pull_request.labels.*.name, 'ai-generated')
     runs-on: ubuntu-latest
 
     steps:
