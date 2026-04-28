@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-
 import * as gameApi from "../services/gameApi";
 
 export function useChessGame() {
@@ -8,6 +7,7 @@ export function useChessGame() {
   const [loading, setLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
 
+  // Helper function to handle loading state and errors for API calls
   const withLoading = useCallback(async (fn) => {
     setLoading(true);
     setRequestError("");
@@ -22,6 +22,7 @@ export function useChessGame() {
     }
   }, []);
 
+  // Starts a new chess game with the specified parameters
   const startGame = useCallback(
     async ({ mode, difficulty, aiModel, whiteName, blackName }) => {
       const result = await withLoading(() =>
@@ -41,12 +42,14 @@ export function useChessGame() {
     [withLoading]
   );
 
+  // Moves a piece on the chessboard
   const movePiece = useCallback(
     async (moveUci) => {
       if (!gameId) return false;
       const result = await withLoading(() => gameApi.move(gameId, moveUci));
       if (!result) return false;
       setGame(result);
+      
       const shouldTriggerAgent =
         result.mode === "Single Player" && !result.is_game_over && result.turn_name === result.black_name;
       if (!shouldTriggerAgent) {
@@ -61,6 +64,7 @@ export function useChessGame() {
     [gameId, withLoading]
   );
 
+  // Resets the current chess game
   const resetGame = useCallback(async () => {
     if (!gameId) return false;
     const result = await withLoading(() => gameApi.reset(gameId));
@@ -69,6 +73,7 @@ export function useChessGame() {
     return true;
   }, [gameId, withLoading]);
 
+  // Undoes the last move made in the chess game
   const undoMove = useCallback(async () => {
     if (!gameId) return false;
     const result = await withLoading(() => gameApi.undo(gameId));

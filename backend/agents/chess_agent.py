@@ -4,7 +4,20 @@ from langsmith import traceable
 
 @traceable(name="chess-agent")
 def run_chess_agent(client, model, fen, legal_moves):
-    tools = [
+    tools = create_tools()
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[create_message(fen)],
+        tools=tools,
+        tool_choice="auto"
+    )
+
+    return process_response(response)
+
+def create_tools():
+    """Create the tools configuration for the chess agent."""
+    return [
         {
             "type": "function",
             "function": {
@@ -22,16 +35,15 @@ def run_chess_agent(client, model, fen, legal_moves):
         }
     ]
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{
-            "role": "user",
-            "content": f"Find best move for this FEN: {fen}"
-        }],
-        tools=tools,
-        tool_choice="auto"
-    )
+def create_message(fen):
+    """Create the message for the chat completion request."""
+    return {
+        "role": "user",
+        "content": f"Find best move for this FEN: {fen}"
+    }
 
+def process_response(response):
+    """Process the response from the chat completion."""
     message = response.choices[0].message
 
     if message.tool_calls:

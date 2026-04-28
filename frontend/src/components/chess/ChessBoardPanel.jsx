@@ -13,7 +13,7 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
 
   const position = fen || "start";
 
-  // FIX 1: Guard against non-pawn pieces so king drags never trigger promotion flow
+  // Check if the move is a promotion move
   const isPromotionMove = (sourceSquare, targetSquare, piece) => {
     if (!piece || !sourceSquare || !targetSquare) return false;
     // Only pawns can promote — explicitly exclude kings and all other pieces
@@ -43,13 +43,13 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
   const onPieceDrop = (sourceSquare, targetSquare, piece) => {
     if (disabled) return false;
 
-    // FIX 1 continued: promotion check now correctly ignores king/castling moves
+    // Check for promotion move
     if (isPromotionMove(sourceSquare, targetSquare, piece)) {
       return true;
     }
 
-    const temp = new Chess(position === "start" ? undefined : fen);
-    const move = temp.move({
+    const tempChess = new Chess(position === "start" ? undefined : fen);
+    const move = tempChess.move({
       from: sourceSquare,
       to: targetSquare
     });
@@ -66,8 +66,8 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
     const promotion = piece[1]?.toLowerCase();
     if (!promotion || !["q", "r", "b", "n"].includes(promotion)) return false;
 
-    const temp = new Chess(position === "start" ? undefined : fen);
-    const move = temp.move({
+    const tempChess = new Chess(position === "start" ? undefined : fen);
+    const move = tempChess.move({
       from: promoteFromSquare,
       to: promoteToSquare,
       promotion
@@ -101,8 +101,8 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
       const box = boardBoxRef.current;
       if (!box) return;
       const rect = box.getBoundingClientRect();
-      const next = Math.max(220, Math.floor(Math.min(rect.width, rect.height)));
-      setBoardWidth((prev) => (Math.abs(prev - next) >= 2 ? next : prev));
+      const nextWidth = Math.max(220, Math.floor(Math.min(rect.width, rect.height)));
+      setBoardWidth((prev) => (Math.abs(prev - nextWidth) >= 2 ? nextWidth : prev));
     };
 
     updateMobileFlag();
@@ -165,16 +165,15 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
     }),
     []
   );
-  // Derive check state and king square directly from FEN using chess.js —
-  // no backend change needed since board.is_check() mirrors chess.js inCheck().
+
   const checkSquare = useMemo(() => {
     if (!fen || fen === "start") return null;
     try {
-      const temp = new Chess(fen);
-      if (!temp.inCheck()) return null;
-      const turn = temp.turn(); // "w" or "b"
+      const tempChess = new Chess(fen);
+      if (!tempChess.inCheck()) return null;
+      const turn = tempChess.turn(); // "w" or "b"
       // Find the king square for the side in check
-      for (const square of temp.board().flat()) {
+      for (const square of tempChess.board().flat()) {
         if (square && square.type === "k" && square.color === turn) {
           return square.square;
         }
@@ -205,12 +204,12 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
       };
 
       try {
-        const temp = new Chess(position === "start" ? undefined : fen);
-        const legalMoves = temp.moves({ square: selectedSquare, verbose: true });
-        for (const m of legalMoves) {
+        const tempChess = new Chess(position === "start" ? undefined : fen);
+        const legalMoves = tempChess.moves({ square: selectedSquare, verbose: true });
+        for (const move of legalMoves) {
           // Don't overwrite the check highlight with a plain dot if destination is the check square
-          if (!styles[m.to]) {
-            styles[m.to] = {
+          if (!styles[move.to]) {
+            styles[move.to] = {
               background: "radial-gradient(circle, rgba(31,95,214,0.25) 36%, transparent 40%)"
             };
           }
@@ -226,9 +225,9 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
   const handleSquareClick = (square) => {
     if (!isMobile || disabled) return;
 
-    const temp = new Chess(position === "start" ? undefined : fen);
-    const piece = temp.get(square);
-    const turn = temp.turn();
+    const tempChess = new Chess(position === "start" ? undefined : fen);
+    const piece = tempChess.get(square);
+    const turn = tempChess.turn();
 
     if (!selectedSquare) {
       if (!piece || piece.color !== turn) return;
@@ -241,17 +240,15 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
       return;
     }
 
-    const selectedPiece = temp.get(selectedSquare);
+    const selectedPiece = tempChess.get(selectedSquare);
     if (!selectedPiece) {
       setSelectedSquare(null);
       return;
     }
 
-    // FIX 3: Check if a legal move exists from selectedSquare → square BEFORE
-    // deciding to re-select. This fixes castling: tapping g1 (where the rook sits)
-    // should castle, not re-select the rook.
-    const legalMoves = temp.moves({ square: selectedSquare, verbose: true });
-    const isLegalTarget = legalMoves.some((m) => m.to === square);
+    // Check if a legal move exists from selectedSquare → square BEFORE deciding to re-select
+    const legalMoves = tempChess.moves({ square: selectedSquare, verbose: true });
+    const isLegalTarget = legalMoves.some((move) => move.to === square);
 
     if (!isLegalTarget && piece && piece.color === turn) {
       // No legal move to this square, but it's our own piece — re-select it
@@ -268,7 +265,7 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
       ? "q"
       : undefined;
 
-    const move = temp.move({
+    const move = tempChess.move({
       from: selectedSquare,
       to: square,
       promotion
@@ -307,7 +304,7 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
           customBoardStyle={customBoardStyle}
           customSquareStyles={customSquareStyles}
           arePiecesDraggable={!disabled && !isMobile}
-          animationDuration={500} // FIX 2: was 2000ms — reduced to 500ms so board isn't locked
+          animationDuration={500} // Reduced to 500ms so board isn't locked
         />
       </div>
     </div>

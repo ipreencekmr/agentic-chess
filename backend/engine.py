@@ -11,14 +11,17 @@ class StockfishService:
         self.engine = chess.engine.SimpleEngine.popen_uci(path)
 
     def set_skill(self, level: int):
+        """Set the skill level of the Stockfish engine."""
         self.engine.configure({"Skill Level": level})
 
     def get_best_move(self, fen: str, depth: int = 12):
+        """Get the best move for the given FEN and depth."""
         board = chess.Board(fen)
         result = self.engine.play(board, chess.engine.Limit(depth=depth))
         return result.move.uci()
 
     def get_top_moves(self, fen: str, depth: int = 12, k: int = 3):
+        """Get the top k moves for the given FEN and depth."""
         board = chess.Board(fen)
         info = self.engine.analyse(
             board,
@@ -35,6 +38,7 @@ class StockfishService:
         return moves
 
     def evaluate(self, fen: str, depth: int = 12):
+        """Evaluate the position for the given FEN and depth."""
         board = chess.Board(fen)
         info = self.engine.analyse(board, chess.engine.Limit(depth=depth))
         score = info["score"].relative
@@ -45,6 +49,7 @@ class StockfishService:
         }
 
     def close(self):
+        """Close the Stockfish engine."""
         if hasattr(self, "engine") and self.engine:
             try:
                 self.engine.quit()
@@ -52,15 +57,17 @@ class StockfishService:
                 pass
             finally:
                 self.engine = None
-    
+
     @classmethod
     def shutdown(cls):
+        """Shutdown the Stockfish service."""
         if cls._instance is not None:
             cls._instance.close()
             cls._instance = None
 
     @classmethod
-    def getInstance(cls):
+    def get_instance(cls):
+        """Get the singleton instance of StockfishService."""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:

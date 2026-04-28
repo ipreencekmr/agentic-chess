@@ -10,78 +10,38 @@ export function GameControls({
   onReset,
   onUndo
 }) {
-  const setField = (key, value) => {
+  const updateSetting = (key, value) => {
     onSettingsChange((current) => ({ ...current, [key]: value }));
   };
 
+  const renderSelect = (label, value, options, key) => (
+    <label>
+      {label}
+      <select
+        value={value}
+        disabled={loading}
+        onChange={(event) => updateSetting(key, event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   return (
     <div className="controls-grid">
-      <label>
-        Game Mode
-        <select
-          value={settings.mode}
-          disabled={loading}
-          onChange={(event) => setField("mode", event.target.value)}
-        >
-          {modes.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+      {renderSelect("Game Mode", settings.mode, modes, "mode")}
+      {renderSelect("AI Difficulty", settings.difficulty, difficulties, "difficulty")}
 
-      <label>
-        AI Difficulty
-        <select
-          value={settings.difficulty}
-          disabled={loading}
-          onChange={(event) => setField("difficulty", event.target.value)}
-        >
-          {difficulties.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
+      {settings.mode === "Single Player" && settings.difficulty === "AI Agent" && (
+        renderSelect("AI Agent Model", settings.aiModel, aiModels, "aiModel")
+      )}
 
-      {settings.mode === "Single Player" && settings.difficulty === "AI Agent" ? (
-        <label>
-          AI Agent Model
-          <select
-            value={settings.aiModel}
-            disabled={loading}
-            onChange={(event) => setField("aiModel", event.target.value)}
-          >
-            {aiModels.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-
-      <label>
-        White Player Name
-        <input
-          type="text"
-          value={settings.whiteName}
-          disabled={loading}
-          onChange={(event) => setField("whiteName", event.target.value)}
-        />
-      </label>
-
-      <label>
-        {blackLabel}
-        <input
-          type="text"
-          value={settings.blackName}
-          disabled={loading}
-          onChange={(event) => setField("blackName", event.target.value)}
-        />
-      </label>
+      {renderSelect("White Player Name", settings.whiteName, [], "whiteName")}
+      {renderSelect(blackLabel, settings.blackName, [], "blackName")}
 
       <div className="button-row">
         <button type="button" onClick={onStart} disabled={loading}>

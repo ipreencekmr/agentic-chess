@@ -29,51 +29,53 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
     if not legal_moves:
         return None, "No legal moves available."
 
-    # Stockfish for Easy, Medium, Hard
+    # Stockfish parameters for different difficulty levels
     stockfish_difficulties = {
         "Easy": {"skill_level": 1, "depth": 1},
         "Medium": {"skill_level": 8, "depth": 8},
         "Hard": {"skill_level": 20, "depth": 20},
     }
+    
     if difficulty in stockfish_difficulties:
-        try:
-            params = stockfish_difficulties[difficulty]
-            engine = StockfishService.getInstance()
-            engine.set_skill(params["skill_level"])
-            move_uci = engine.get_best_move(fen=board.fen(), depth=params["depth"])
-            print(f"Stockfish suggested move: {move_uci}")
+        return _get_stockfish_move(board, legal_moves, difficulty)
 
-            if move_uci and chess.Move.from_uci(move_uci) in legal_moves:
-                return move_uci, None
-            move = _capture_priority_move(board, legal_moves)
-            return move.uci(), "Engine returned no legal move. Falling back to capture-priority heuristic."
-        except Exception as exc:
-            move = _capture_priority_move(board, legal_moves)
-            return move.uci(), f"Engine error: {exc}. Falling back to capture-priority heuristic."
-
-    # OpenAI agent for AI Agent
     if difficulty == "AI Agent":
-        client = _openai_client()
-        if not client:
-            return random.choice(legal_moves).uci(), "OpenAI unavailable"
-
-        try:
-            move_uci, error = run_chess_agent(
-                client,
-                ai_model,
-                board.fen(),
-                legal_moves
-            )
-
-            if move_uci and move_uci in [m.uci() for m in legal_moves]:
-                return move_uci, None
-
-            return random.choice(legal_moves).uci(), "Fallback: invalid move"
-
-        except Exception as exc:
-            return random.choice(legal_moves).uci(), f"AI error: {exc}"
+        return _get_ai_agent_move(board, legal_moves, ai_model)
 
     if difficulty == "Capture Priority":
         return _capture_priority_move(board, legal_moves).uci(), None
 
     return random.choice(legal_moves).uci(), None
+
+def _get_stockfish_move(board: chess.Board, legal_moves: list[chess.Move], difficulty: str) -> tuple[str | None, str | None]:
+    try:
+        params = stockfish_difficulties[difficulty]
+        engine = StockfishService.getInstance()
+        engine.set_skill(params["skill_level"])
+        move_uci = engine.get_best_move(fen=board.fen(), depth=params["depth"])
+        print(f"Stockfish suggested move: {move_uci}")
+
+        if move_uci and chess.Move.from_uci(move_uci) in legal_moves:
+            return move_uci, None
+        
+        move = _capture_priority_move(board, legal_moves)
+        return move.uci(), "Engine returned no legal move. Falling back to capture-priority heuristic."
+    except Exception as exc:
+        move = _capture_priority_move(board, legal_moves)
+        return move.uci(), f"Engine error: {exc}. Falling back to capture-priority heuristic."
+
+def _get_ai_agent_move(board: chess.Board, legal_moves: list[chess.Move], ai_model: str) -> tuple[str | None, str | None]:
+    client = _openai_client()
+    if not client:
+        return random.choice(legal_moves).uci(), "OpenAI unavailable"
+
+    try:
+        move_uci, error = run_chess_agent(client, ai_model, board.fen(), legal_moves)
+
+        if move_uci and move_uci in [m.uci() for m in legal_moves]:
+            return move_uci, None
+
+        return random.choice(legal_moves).uci(), "Fallback: invalid move"
+
+    except Exception as exc:
+        return random.choice(legal_moves).uci(), f"AI error: {exc}"

@@ -11,9 +11,10 @@ const MODES = ["Single Player", "Multiplayer"];
 const DIFFICULTIES = ["Easy", "Medium", "Hard", "Capture Priority", "AI Agent"];
 const AI_MODELS = ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1", "gpt-4o"];
 
+// Main application component
 export default function App() {
   const prevDifficultyRef = useRef("Easy");
-  const [openAiAvailable, setOpenAiAvailable] = useState(false);
+  const [isOpenAiAvailable, setIsOpenAiAvailable] = useState(false);
   const [settings, setSettings] = useState({
     mode: "Single Player",
     difficulty: "Easy",
@@ -21,7 +22,7 @@ export default function App() {
     whiteName: "White",
     blackName: "Black"
   });
-  const [showResultDialog, setShowResultDialog] = useState(false);
+  const [isResultDialogVisible, setIsResultDialogVisible] = useState(false);
 
   const {
     game,
@@ -34,50 +35,47 @@ export default function App() {
   } = useChessGame();
 
   const blackLabel = useMemo(() => {
-    if (settings.mode === "Single Player") return "Black Player Name (default: Computer)";
-    return "Black Player Name";
+    return settings.mode === "Single Player" 
+      ? "Black Player Name (default: Computer)" 
+      : "Black Player Name";
   }, [settings.mode]);
-  const difficulties = useMemo(
-    () => DIFFICULTIES.filter((difficulty) => openAiAvailable || difficulty !== "AI Agent"),
-    [openAiAvailable]
+
+  const availableDifficulties = useMemo(
+    () => DIFFICULTIES.filter((difficulty) => isOpenAiAvailable || difficulty !== "AI Agent"),
+    [isOpenAiAvailable]
   );
 
   useEffect(() => {
-    let active = true;
+    let isActive = true;
     void (async () => {
       try {
         const health = await getHealth();
-        if (active) setOpenAiAvailable(Boolean(health?.openai_available));
+        if (isActive) setIsOpenAiAvailable(Boolean(health?.openai_available));
       } catch {
-        if (active) setOpenAiAvailable(false);
+        if (isActive) setIsOpenAiAvailable(false);
       }
     })();
     return () => {
-      active = false;
+      isActive = false;
     };
   }, []);
 
   useEffect(() => {
-    if (openAiAvailable || settings.difficulty !== "AI Agent") return;
+    if (isOpenAiAvailable || settings.difficulty !== "AI Agent") return;
     setSettings((current) => ({ ...current, difficulty: "Easy" }));
-  }, [openAiAvailable, settings.difficulty]);
+  }, [isOpenAiAvailable, settings.difficulty]);
 
   useEffect(() => {
-    if (game?.is_game_over) {
-      setShowResultDialog(true);
-    } else {
-      setShowResultDialog(false);
-    }
-  }, [game?.is_game_over, game?.status]);
+    setIsResultDialogVisible(game?.is_game_over || false);
+  }, [game?.is_game_over]);
 
   useEffect(() => {
     const previousDifficulty = prevDifficultyRef.current;
     prevDifficultyRef.current = settings.difficulty;
 
-    if (previousDifficulty === settings.difficulty) return;
-    if (!game?.game_id) return;
+    if (previousDifficulty === settings.difficulty || !game?.game_id) return;
 
-    setShowResultDialog(false);
+    setIsResultDialogVisible(false);
     void startGame(settings);
   }, [game?.game_id, settings, startGame]);
 
@@ -88,7 +86,7 @@ export default function App() {
         controls={
           <GameControls
             modes={MODES}
-            difficulties={difficulties}
+            difficulties={availableDifficulties}
             aiModels={AI_MODELS}
             settings={settings}
             blackLabel={blackLabel}
@@ -112,12 +110,12 @@ export default function App() {
         sidePanel={<StatusPanel game={game} loading={loading} requestError={requestError} />}
       />
 
-      {showResultDialog && game?.is_game_over ? (
+      {isResultDialogVisible && game?.is_game_over ? (
         <div className="result-dialog-backdrop" role="presentation">
           <div className="result-dialog" role="dialog" aria-modal="true" aria-label="Game result">
             <h2>Game Over</h2>
             <p>{game.status}</p>
-            <button type="button" onClick={() => setShowResultDialog(false)}>
+            <button type="button" onClick={() => setIsResultDialogVisible(false)}>
               Close
             </button>
           </div>

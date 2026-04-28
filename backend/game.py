@@ -9,8 +9,9 @@ from .ai import choose_ai_move
 
 
 def _normalize_name(name: str, fallback: str) -> str:
-    clean = (name or "").strip()
-    return clean or fallback
+    """Normalize player name, returning fallback if name is empty."""
+    clean_name = (name or "").strip()
+    return clean_name or fallback
 
 
 class ChessGame:
@@ -19,22 +20,25 @@ class ChessGame:
         self.difficulty = difficulty
         self.ai_model = ai_model
         self.white_name = _normalize_name(white_name, "White")
-        black_default = "Computer" if mode == "Single Player" else "Black"
-        self.black_name = _normalize_name(black_name, black_default)
+        black_default_name = "Computer" if mode == "Single Player" else "Black"
+        self.black_name = _normalize_name(black_name, black_default_name)
         self.board = chess.Board()
         self.move_history: list[str] = []
         self.last_move: str | None = None
         self.error: str | None = None
         self.ai_move: str | None = None
 
-    def player_name(self, color: bool) -> str:
-        return self.white_name if color == chess.WHITE else self.black_name
+    def player_name(self, is_white: bool) -> str:
+        """Return the name of the player based on color."""
+        return self.white_name if is_white == chess.WHITE else self.black_name
 
     @property
     def turn_name(self) -> str:
+        """Return the name of the player whose turn it is."""
         return self.player_name(self.board.turn)
 
     def status(self) -> str:
+        """Return the current status of the game."""
         if self.board.is_checkmate():
             winner = chess.WHITE if self.board.turn == chess.BLACK else chess.BLACK
             return f"Checkmate! {self.player_name(winner)} wins."
@@ -47,9 +51,11 @@ class ChessGame:
         return f"{self.turn_name}'s turn."
 
     def legal_moves(self) -> list[str]:
+        """Return a list of legal moves in UCI format."""
         return [move.uci() for move in self.board.legal_moves]
 
     def to_payload(self, game_id: str) -> dict:
+        """Return the game state as a payload dictionary."""
         return {
             "game_id": game_id,
             "mode": self.mode,
@@ -69,6 +75,7 @@ class ChessGame:
         }
 
     def reset(self) -> None:
+        """Reset the game state to the initial configuration."""
         self.board.reset()
         self.move_history = []
         self.last_move = None
@@ -76,6 +83,7 @@ class ChessGame:
         self.ai_move = None
 
     def push_move(self, move_uci: str) -> bool:
+        """Attempt to push a move to the board."""
         try:
             move = chess.Move.from_uci(move_uci.lower())
         except Exception:
@@ -93,6 +101,7 @@ class ChessGame:
         return True
 
     def undo(self) -> None:
+        """Undo the last move if possible."""
         if self.board.move_stack:
             self.board.pop()
             if self.move_history:
@@ -102,11 +111,13 @@ class ChessGame:
             self.ai_move = None
 
     def undo_turn(self) -> None:
+        """Undo the last turn, and if in single player mode, undo the AI's turn."""
         self.undo()
         if self.mode == "Single Player" and self.board.move_stack and self.board.turn == chess.BLACK:
             self.undo()
 
     def maybe_play_ai(self) -> None:
+        """If it's the AI's turn, make a move using the AI."""
         self.ai_move = None
         if self.mode != "Single Player" or self.board.is_game_over() or self.board.turn != chess.BLACK:
             return
@@ -126,6 +137,7 @@ class GameStore:
     def create(
         self, mode: str, difficulty: str, ai_model: str, white_name: str, black_name: str
     ) -> tuple[str, ChessGame]:
+        """Create a new game and return its ID and the game instance."""
         game_id = str(uuid.uuid4())
         game = ChessGame(
             mode=mode,
@@ -139,9 +151,11 @@ class GameStore:
         return game_id, game
 
     def get(self, game_id: str) -> ChessGame | None:
+        """Retrieve a game by its ID."""
         with self._lock:
             return self._games.get(game_id)
 
     def remove(self, game_id: str) -> None:
+        """Remove a game by its ID."""
         with self._lock:
             self._games.pop(game_id, None)

@@ -31,7 +31,6 @@ def _get_game_or_404(game_id: str):
 
 @app.on_event("startup")
 def startup_event():
-    path = os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
     StockfishService.getInstance()
 
 @app.on_event("shutdown")
@@ -56,12 +55,10 @@ def start_game(payload: StartGameRequest) -> dict:
     )
     return game.to_payload(game_id)
 
-
 @app.get("/api/game/{game_id}", response_model=GameStateResponse)
 def get_game(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
     return game.to_payload(game_id)
-
 
 @app.post("/api/game/{game_id}/move", response_model=GameStateResponse)
 def move(game_id: str, payload: MoveRequest) -> dict:
@@ -75,7 +72,6 @@ def move(game_id: str, payload: MoveRequest) -> dict:
 
     return game.to_payload(game_id)
 
-
 @app.post("/api/game/{game_id}/agent-move", response_model=GameStateResponse)
 def agent_move(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
@@ -86,20 +82,17 @@ def agent_move(game_id: str) -> dict:
     game.maybe_play_ai()
     return game.to_payload(game_id)
 
-
 @app.post("/api/game/{game_id}/undo", response_model=GameStateResponse)
 def undo(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
     game.undo_turn()
     return game.to_payload(game_id)
 
-
 @app.post("/api/game/{game_id}/reset", response_model=GameStateResponse)
 def reset(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
     game.reset()
     return game.to_payload(game_id)
-
 
 @app.delete("/api/game/{game_id}")
 def close_game(game_id: str) -> dict:

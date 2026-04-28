@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional, List
 
 from pydantic import BaseModel, Field
 
@@ -26,10 +26,10 @@ class GameStateResponse(BaseModel):
     black_name: str
     turn_name: str
     status: str
-    error: str | None = None
-    ai_move: str | None = None
-    last_move: str | None = None
+    error: Optional[str] = None
+    ai_move: Optional[str] = None
+    last_move: Optional[str] = None
     fen: str
-    legal_moves: list[str]
-    move_history: list[str]
+    legal_moves: List[str]
+    move_history: List[str]
     is_game_over: bool
