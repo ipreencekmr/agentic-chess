@@ -64,7 +64,7 @@ jobs:
           LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
           LANGCHAIN_TRACING_V2: 'true'
           LANGCHAIN_PROJECT: 'Chess'
-          CLEANUP_MODEL: ${{ secrets.CLEANUP_MODEL }}
+          CLEANUP_MODEL: ${{ vars.CLEANUP_MODEL }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python scripts/cleanup_agent.py
 
