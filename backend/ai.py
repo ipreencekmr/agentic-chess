@@ -45,34 +45,6 @@ def _get_stockfish_move(board: chess.Board, legal_moves: list[chess.Move], skill
         move = _capture_priority_move(board, legal_moves)
         return move.uci(), f"Engine error: {exc}. Falling back to capture-priority heuristic."
 
-def _get_openai_move(board: chess.Board, legal_moves: list[chess.Move], ai_model: str) -> tuple[str | None, str | None]:
-    """
-    Get the move from OpenAI agent.
-    If OpenAI is unavailable or returns an invalid move, fallback to random legal move.
-    """
-    client = _openai_client()
-    if not client:
-        return random.choice(legal_moves).uci(), "OpenAI unavailable"
-
-    try:
-        from .agents.move_agent import run_chess_agent
-        
-        move_uci, error = run_chess_agent(
-            client,
-            ai_model,
-            board.fen(),
-            legal_moves
-        )
-
-        legal_moves_uci = [m.uci() for m in legal_moves]
-        if move_uci and move_uci in legal_moves_uci:
-            return move_uci, None
-
-        return random.choice(legal_moves).uci(), "Fallback: invalid move"
-
-    except Exception as exc:
-        return random.choice(legal_moves).uci(), f"AI error: {exc}"
-
 def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[str | None, str | None]:
     """
     Choose an AI move based on difficulty and model.
@@ -122,4 +94,4 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
     # Default fallback: random legal move
     return random.choice(legal_moves).uci(), None
 
-# Made with Bob
+
