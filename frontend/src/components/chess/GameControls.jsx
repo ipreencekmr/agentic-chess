@@ -10,9 +10,18 @@ export function GameControls({
   onReset,
   onUndo
 }) {
+  // Helper to update a single field in the settings object
   const setField = (key, value) => {
     onSettingsChange((current) => ({ ...current, [key]: value }));
   };
+
+  // Render select options for a given array
+  const renderOptions = (options) =>
+    options.map((option) => (
+      <option key={option} value={option}>
+        {option}
+      </option>
+    ));
 
   return (
     <div className="controls-grid">
@@ -23,11 +32,7 @@ export function GameControls({
           disabled={loading}
           onChange={(event) => setField("mode", event.target.value)}
         >
-          {modes.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
+          {renderOptions(modes)}
         </select>
       </label>
 
@@ -38,11 +43,7 @@ export function GameControls({
           disabled={loading}
           onChange={(event) => setField("difficulty", event.target.value)}
         >
-          {difficulties.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
+          {renderOptions(difficulties)}
         </select>
       </label>
 
@@ -54,11 +55,7 @@ export function GameControls({
             disabled={loading}
             onChange={(event) => setField("aiModel", event.target.value)}
           >
-            {aiModels.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            {renderOptions(aiModels)}
           </select>
         </label>
       ) : null}

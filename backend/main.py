@@ -8,10 +8,13 @@ from .engine import StockfishService
 from .ai import is_openai_ready
 from .game import GameStore
 from .schemas import GameStateResponse, MoveRequest, StartGameRequest
+from .telemetry import setup_tracing  # ← new
 
 load_dotenv()
 
 app = FastAPI(title="Agentic Chess API", version="1.0.0")
+
+setup_tracing(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,7 +34,8 @@ def _get_game_or_404(game_id: str):
 
 @app.on_event("startup")
 def startup_event():
-    path = os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
+    # Ensure Stockfish path is loaded from environment, but do not use the variable directly
+    os.getenv("STOCKFISH_PATH", "/usr/games/stockfish")
     StockfishService.getInstance()
 
 @app.on_event("shutdown")

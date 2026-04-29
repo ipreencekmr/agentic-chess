@@ -6,3 +6,10 @@ stockfish>=3.27.0
 python-dotenv>=1.0.1
 langsmith>=0.4.0,<0.5.0
 gitpython>=3.1.47
+
+# OpenTelemetry — FastAPI tracing via Jaeger
+opentelemetry-sdk>=1.24.0
+opentelemetry-api>=1.24.0
+opentelemetry-exporter-otlp-proto-grpc>=1.24.0
+opentelemetry-instrumentation-fastapi>=0.45b0
+opentelemetry-instrumentation-httpx>=0.45b0

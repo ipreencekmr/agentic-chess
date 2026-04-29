@@ -2,6 +2,59 @@ import json
 from backend.tools.chess_tools import explain_move_tool, get_best_move_tool
 from langsmith import traceable
 
+@traceable(name="chess-agent")
+def run_chess_agent(client, model, fen, legal_moves):
+    """
+    Run the chess agent to find the best move for a given FEN using the provided client and model.
+    """
+    tools = [
+        {
+            "type": "function",
+            "function": {
+                "name": "get_best_move",
+                "description": "Get the best chess move from Stockfish engine. You MUST use this tool to select moves.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "fen": {"type": "string", "description": "Current board position in FEN notation"},
+                        "depth": {"type": "integer", "description": "Search depth (default: 20)"}
+                    },
+                    "required": ["fen"]
+                }
+            }
+        }
+    ]
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{
+            "role": "system",
+            "content": "You are a chess move selector. You MUST use the get_best_move tool to select moves. Do NOT use your own reasoning or knowledge to select moves. ALWAYS call the tool."
+        }, {
+            "role": "user",
+            "content": f"Use the get_best_move tool to find the best move for this position: {fen}"
+        }],
+        tools=tools,
+        tool_choice={"type": "function", "function": {"name": "get_best_move"}}  # Force tool use
+    )
+
+    message = response.choices[0].message
+
+    # Check if the model made a tool call
+    if message.tool_calls:
+        tool_call = message.tool_calls[0]
+        args = json.loads(tool_call.function.arguments)
+
+        # Use default depth of 12 if not specified
+        move = get_best_move_tool(
+            fen=args["fen"],
+            depth=args.get("depth", 20)
+        )
+
+        return move, None
+
+    return None, "No tool call made"
+
 @traceable(name="chess-move-agent")
 def get_agent_move(client, model, fen, legal_moves):
     """
@@ -41,10 +94,12 @@ def get_agent_move(client, model, fen, legal_moves):
 
     message = response.choices[0].message
 
+    # Check if the model made a tool call
     if message.tool_calls:
         tool_call = message.tool_calls[0]
         args = json.loads(tool_call.function.arguments)
 
+        # Use default depth of 12 if not specified
         move = get_best_move_tool(
             fen=args["fen"],
             depth=args.get("depth", 20)
@@ -110,3 +165,5 @@ Be concise, educational, and encouraging. Speak directly to the player."""
     )
     
     return response.choices[0].message.content
+
+# Made with Bob
