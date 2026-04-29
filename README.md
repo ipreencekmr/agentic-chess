@@ -44,7 +44,7 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 - `Dockerfile` Hugging Face Docker Space image (frontend + backend in one container)
 - `.github/workflows/deploy-huggingface-space.yml` GitHub Actions deployment workflow
 - `.github/workflows/readme-agent.yml` GitHub Actions workflow for automated README updates
-- `.github/workflows/code-cleanup.yml` new weekly automated code cleanup and refactor workflow powered by OpenAI, now supports dry-run mode for previewing changes without writing files or opening PRs
+- `.github/workflows/code-cleanup.yml` monthly automated code cleanup and refactor workflow powered by OpenAI, now supports dry-run mode for previewing changes without writing files or opening PRs
 
 ## Game Modes and Difficulty
 
@@ -59,7 +59,7 @@ Single Player difficulty options:
 - `AI Agent` (LLM-powered move using selected model with Langchain tracing)
 
 Notes:
-- `AI Agent` option appears only when backend has `OPENAI_API_KEY` available.
+- `AI Agent` option appears only when backend has `OPENAI_API_KEY` available and `DISABLE_AI_MODE` is not set to true.
 - `Easy`, `Medium`, `Hard` and `Capture Priority` do not use OpenAI even if key is present.
 - In Single Player, your move is shown first, then agent move is called as a second step.
 - Changing difficulty starts a fresh game automatically.
@@ -73,6 +73,7 @@ Notes:
 - Visual check indicator: red pulsing highlight on king's square when in check
 - Mobile tap-to-move shows selected piece highlight and legal move dots
 - Piece promotion logic fixed to avoid king drag triggering promotion flow
+- AI Agent move explanations available (LLM explains why moves are good/bad based on Stockfish analysis)
 
 ## Run Locally (Non-Docker)
 
@@ -97,6 +98,7 @@ Optional environment variables:
 
 ```bash
 OPENAI_API_KEY=
+DISABLE_AI_MODE=false
 STOCKFISH_PATH=
 CHESS_ENGINE_MOVE_TIME=
 LANGCHAIN_API_KEY=
@@ -107,11 +109,12 @@ CLEANUP_MODEL=gpt-4.1
 
 Notes:
 - `.env` is auto-loaded by backend startup.
+- `DISABLE_AI_MODE` set to `true` disables AI Agent difficulty mode even if OpenAI API key is set.
 - `CHESS_ENGINE_MOVE_TIME` is in milliseconds and clamped to `100` - `5000` ms.
 - `STOCKFISH_PATH` must point to a valid Stockfish binary.
 - Langchain tracing environment variables enable detailed AI agent tracing.
-- `CLEANUP_MODEL` sets the OpenAI model used for weekly automated code cleanup.
-- The weekly code cleanup workflow now supports a dry-run mode to preview changes without writing files or opening PRs.
+- `CLEANUP_MODEL` sets the OpenAI model used for monthly automated code cleanup.
+- The monthly code cleanup workflow now supports a dry-run mode to preview changes without writing files or opening PRs.
 - The code cleanup workflow now reads `CLEANUP_MODEL` from GitHub Variables (`vars.CLEANUP_MODEL`) instead of secrets.
 
 ## Run With Docker Compose
@@ -150,7 +153,7 @@ CHESS_ENGINE_MOVE_TIME=1500
 
 This repo includes:
 
-- Root `Dockerfile` for Hugging Face Docker Space runtime
+- Root `Dockerfile` for Hugging Face Docker Space runtime (now includes Jaeger tracing binary)
 - Workflow: `.github/workflows/deploy-huggingface-space.yml`
 
 ### 1. Create a Hugging Face Space
@@ -167,20 +170,4 @@ In GitHub repo settings, add:
 
 ### 3. Deploy
 
-- Push to `main` or run workflow manually from Actions tab.
-- Workflow syncs repository contents to the Hugging Face Space Git repo.
-
-## Notes
-
-- In browser builds, frontend API base defaults to `/api`.
-- Override API base manually with `VITE_API_BASE_URL` if needed.
-- Backend now uses a singleton `StockfishService` for engine management with skill level and depth tuning.
-- AI Agent moves are powered by a Langchain-traced tool-enabled approach for better move selection and observability.
-- New GitHub Actions workflow `.github/workflows/readme-agent.yml` automates README updates on code changes and adds `ai-generated` label to PRs.
-- New GitHub Actions workflow `.github/workflows/code-cleanup.yml` added for weekly automated code cleanup and refactor, running every Monday and on manual trigger, using OpenAI to fix lint issues and improve code quality.
-- The code cleanup workflow now supports a `dry_run` input to preview changes without writing files or opening PRs.
-- Default `STOCKFISH_PATH` in Docker Compose is set to `/usr/games/stockfish`.
-- Piece promotion logic fixed to avoid king drag triggering promotion flow.
-- Check state is visually indicated on the board with a red pulse on the king's square.
-- Mobile tap-to-move UX improved with selected piece highlight and legal move dots.
-- Piece movement animation duration reduced to 0.5 seconds for smoother gameplay experience.
+- Push to `main` or run workflow manually from Actions
