@@ -33,3 +33,4 @@ class GameStateResponse(BaseModel):
     legal_moves: list[str]
     move_history: list[str]
     is_game_over: bool
+    move_explanation: str | None = None

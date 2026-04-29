@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
-export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
+export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled, aiMove, moveExplanation, onExplainMove, loading, isGameOver }) {
   const boardRef = useRef(null);
   const boardBoxRef = useRef(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -12,6 +12,22 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
   const [selectedSquare, setSelectedSquare] = useState(null);
 
   const position = fen || "start";
+
+  // Exit fullscreen when game is over
+  useEffect(() => {
+    if (isGameOver && fullscreen) {
+      const container = boardRef.current;
+      if (document.fullscreenElement) {
+        // Standard fullscreen API
+        document.exitFullscreen();
+      } else if (container && container.classList.contains('css-fullscreen')) {
+        // CSS fallback for iOS
+        container.classList.remove('css-fullscreen');
+        document.body.style.overflow = '';
+        setFullscreen(false);
+      }
+    }
+  }, [isGameOver, fullscreen]);
 
   // FIX 1: Guard against non-pawn pieces so king drags never trigger promotion flow
   const isPromotionMove = (sourceSquare, targetSquare, piece) => {
@@ -81,12 +97,58 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
   const toggleFullscreen = async () => {
     const container = boardRef.current;
     if (!container) return;
-    if (!document.fullscreenElement) {
-      await container.requestFullscreen();
-      setFullscreen(true);
+    
+    // Check if Fullscreen API is supported (not on iOS Safari)
+    const supportsFullscreen = document.fullscreenEnabled ||
+                               document.webkitFullscreenEnabled ||
+                               document.mozFullScreenEnabled ||
+                               document.msFullscreenEnabled;
+    
+    if (supportsFullscreen) {
+      // Use standard Fullscreen API
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        try {
+          if (container.requestFullscreen) {
+            await container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) {
+            await container.webkitRequestFullscreen();
+          } else if (container.mozRequestFullScreen) {
+            await container.mozRequestFullScreen();
+          } else if (container.msRequestFullscreen) {
+            await container.msRequestFullscreen();
+          }
+          setFullscreen(true);
+        } catch (err) {
+          console.error('Fullscreen request failed:', err);
+          // Fallback to CSS fullscreen
+          container.classList.add('css-fullscreen');
+          setFullscreen(true);
+        }
+      } else {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          await document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+        setFullscreen(false);
+      }
     } else {
-      await document.exitFullscreen();
-      setFullscreen(false);
+      // iOS Safari fallback: use CSS-based fullscreen
+      if (!fullscreen) {
+        container.classList.add('css-fullscreen');
+        setFullscreen(true);
+        // Lock scroll on body
+        document.body.style.overflow = 'hidden';
+      } else {
+        container.classList.remove('css-fullscreen');
+        setFullscreen(false);
+        // Restore scroll on body
+        document.body.style.overflow = '';
+      }
     }
   };
 
@@ -287,9 +349,21 @@ export function ChessBoardPanel({ fen, lastMove, mode, onMove, disabled }) {
     <div className="board-wrap" ref={boardRef}>
       <div className="board-toolbar">
         <span>{mode || "Game not started"}</span>
-        <button type="button" onClick={toggleFullscreen}>
-          {fullscreen ? "Exit Maximize" : "Maximize Board"}
-        </button>
+        <div className="board-toolbar-buttons">
+          {aiMove && !moveExplanation && !fullscreen && (
+            <button
+              type="button"
+              onClick={onExplainMove}
+              disabled={loading}
+              className="explain-button-toolbar"
+            >
+              {loading ? "Analyzing..." : "Explain Move"}
+            </button>
+          )}
+          <button type="button" onClick={toggleFullscreen}>
+            {fullscreen ? "Exit Maximize" : "Maximize Board"}
+          </button>
+        </div>
       </div>
       <div className={`board-box${animateMovePulse ? " move-pulse" : ""}`} ref={boardBoxRef}>
         <Chessboard

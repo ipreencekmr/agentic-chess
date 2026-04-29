@@ -111,12 +111,55 @@ body {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 0.6rem;
+/* iOS Safari fullscreen fallback */
+.board-wrap.css-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 9999;
+  background: linear-gradient(145deg, #f5f7fb 0%, #e8eef8 100%);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
 }
 
 .board-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+.board-toolbar-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.explain-button-toolbar {
+  padding: 0.55rem 0.8rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.explain-button-toolbar:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.explain-button-toolbar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #93c5fd;
+}
+
 }
 
 .board-box {
@@ -126,6 +169,23 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+
+.board-explanation {
+  padding: 0.75rem;
+  background: #f0f9ff;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  line-height: 1.6;
+  color: #1e3a8a;
+}
+
+.board-explanation strong {
+  color: #1e40af;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
   overflow: hidden;
   touch-action: none;
   -webkit-user-select: none;
@@ -190,6 +250,43 @@ body {
   margin: 0;
   padding-left: 1.2rem;
 }
+
+.explain-button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.explain-button:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.explain-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #93c5fd;
+}
+
+.explanation-card {
+  background: #f0f9ff;
+  border-left: 4px solid #3b82f6;
+}
+
+.explanation-card h3 {
+  color: #1e40af;
+}
+
+.explanation-card p {
+  line-height: 1.6;
+  color: #1e3a8a;
+}
+
 
 .result-dialog-backdrop {
   position: fixed;

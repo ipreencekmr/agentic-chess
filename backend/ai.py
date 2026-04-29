@@ -2,7 +2,6 @@ import os
 import random
 import chess
 from .engine import StockfishService
-from .agents.chess_agent import run_chess_agent
 
 try:
     from openai import OpenAI
@@ -51,14 +50,16 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
             move = _capture_priority_move(board, legal_moves)
             return move.uci(), f"Engine error: {exc}. Falling back to capture-priority heuristic."
 
-    # OpenAI agent for AI Agent
+    # AI Agent uses LLM with tool calling (LLM must use tool, not its own reasoning)
     if difficulty == "AI Agent":
         client = _openai_client()
         if not client:
             return random.choice(legal_moves).uci(), "OpenAI unavailable"
 
         try:
-            move_uci, error = run_chess_agent(
+            from .agents.chess_agent import get_agent_move
+            
+            move_uci, error = get_agent_move(
                 client,
                 ai_model,
                 board.fen(),

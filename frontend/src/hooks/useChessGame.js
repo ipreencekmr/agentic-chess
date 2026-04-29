@@ -77,6 +77,14 @@ export function useChessGame() {
     return true;
   }, [gameId, withLoading]);
 
+  const explainMove = useCallback(async () => {
+    if (!gameId) return false;
+    const result = await withLoading(() => gameApi.explainMove(gameId));
+    if (!result) return false;
+    setGame(result);
+    return true;
+  }, [gameId, withLoading]);
+
   return {
     game,
     loading,
@@ -84,6 +92,7 @@ export function useChessGame() {
     startGame,
     movePiece,
     resetGame,
-    undoMove
+    undoMove,
+    explainMove
   };
 }

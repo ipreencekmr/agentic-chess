@@ -1,4 +1,4 @@
-export function StatusPanel({ game, loading, requestError }) {
+export function StatusPanel({ game, loading, requestError, onExplainMove }) {
   if (!game) {
     return (
       <div className="status-card">
@@ -17,11 +17,30 @@ export function StatusPanel({ game, loading, requestError }) {
           <strong>Turn:</strong> {game.turn_name}
         </p>
         {game.ai_move ? (
-          <p>
-            <strong>AI Move:</strong> {game.ai_move}
-          </p>
+          <>
+            <p>
+              <strong>AI Move:</strong> {game.ai_move}
+            </p>
+            {!game.move_explanation && (
+              <button
+                type="button"
+                onClick={onExplainMove}
+                disabled={loading}
+                className="explain-button"
+              >
+                {loading ? "Analyzing..." : "Explain Move"}
+              </button>
+            )}
+          </>
         ) : null}
       </div>
+
+      {game.move_explanation && (
+        <div className="status-card explanation-card">
+          <h3>Move Explanation</h3>
+          <p>{game.move_explanation}</p>
+        </div>
+      )}
 
       <div className="status-card">
         <h3>Players</h3>

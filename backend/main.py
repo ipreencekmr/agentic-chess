@@ -40,12 +40,21 @@ def shutdown_event():
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "openai_available": is_openai_ready()}
+    # Check if AI Agent mode is explicitly disabled via environment variable
+    disable_ai_mode = os.getenv("DISABLE_AI_MODE", "false").lower() == "true"
+    # AI Agent is available only if OpenAI is ready AND not explicitly disabled
+    ai_agent_available = is_openai_ready() and not disable_ai_mode
+    return {"ok": True, "openai_available": ai_agent_available}
 
 @app.post("/api/game/start", response_model=GameStateResponse)
 def start_game(payload: StartGameRequest) -> dict:
-    if payload.difficulty == "AI Agent" and not is_openai_ready():
-        raise HTTPException(status_code=400, detail="AI Agent mode is unavailable because OPENAI_API_KEY is not set.")
+    disable_ai_mode = os.getenv("DISABLE_AI_MODE", "false").lower() == "true"
+    
+    if payload.difficulty == "AI Agent":
+        if disable_ai_mode:
+            raise HTTPException(status_code=400, detail="AI Agent mode is disabled via DISABLE_AI_MODE environment variable.")
+        if not is_openai_ready():
+            raise HTTPException(status_code=400, detail="AI Agent mode is unavailable because OPENAI_API_KEY is not set.")
 
     game_id, game = store.create(
         mode=payload.mode,
@@ -99,6 +108,42 @@ def reset(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
     game.reset()
     return game.to_payload(game_id)
+
+@app.post("/api/game/{game_id}/explain-move", response_model=GameStateResponse)
+def explain_move(game_id: str) -> dict:
+    """Explain the last AI move using LLM analysis."""
+    game = _get_game_or_404(game_id)
+    
+    if not game.ai_move:
+        raise HTTPException(status_code=400, detail="No AI move to explain.")
+    
+    if not game.last_ai_move_fen:
+        raise HTTPException(status_code=400, detail="No position data available for explanation.")
+    
+    if not is_openai_ready():
+        raise HTTPException(status_code=400, detail="OpenAI API not available for explanations.")
+    
+    try:
+        from .agents.chess_agent import explain_chess_move
+        from .ai import _openai_client
+        
+        client = _openai_client()
+        if not client:
+            raise HTTPException(status_code=500, detail="Failed to initialize OpenAI client.")
+        
+        explanation = explain_chess_move(
+            client,
+            game.ai_model,
+            game.last_ai_move_fen,  # FEN before the move
+            game.ai_move
+        )
+        
+        game.move_explanation = explanation
+        return game.to_payload(game_id)
+        
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Explanation failed: {exc}")
+
 
 
 @app.delete("/api/game/{game_id}")
