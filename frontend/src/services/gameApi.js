@@ -104,3 +104,11 @@ export async function undo(gameId) {
     method: "POST"
   });
 }
+
+
+export async function explainMove(gameId) {
+  return await fetchWithTimeout(`${BASE_URL}/game/${gameId}/explain-move`, {
+    method: "POST",
+    timeout: 30000  // 30 seconds for LLM explanation
+  });
+}

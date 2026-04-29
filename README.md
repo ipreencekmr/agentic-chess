@@ -14,7 +14,9 @@ React frontend + FastAPI backend chess application with multiple AI difficulty m
 
 ## Live Demo
 
-- Hugging Face Space: `https://huggingface.co/spaces/ipreencekmr/agentic-chess`
+- **Hugging Face Space**: https://huggingface.co/spaces/ipreencekmr/agentic-chess
+- **Live App**: https://ipreencekmr-agentic-chess.hf.space
+- **Jaeger Tracing UI**: https://ipreencekmr-agentic-chess.hf.space/jaeger
 
 <img width="1917" height="948" alt="image" src="https://github.com/user-attachments/assets/2bc8520b-cf5f-469d-85cd-453876025444" />
 

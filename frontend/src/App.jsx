@@ -29,7 +29,8 @@ export default function App() {
     startGame,
     movePiece,
     resetGame,
-    undoMove
+    undoMove,
+    explainMove
   } = useChessGame();
 
   // Memoize black player label based on mode
@@ -113,9 +114,14 @@ export default function App() {
             mode={game?.mode}
             onMove={movePiece}
             disabled={!game || loading || game.is_game_over}
+            aiMove={game?.ai_move}
+            moveExplanation={game?.move_explanation}
+            onExplainMove={explainMove}
+            loading={loading}
+            isGameOver={game?.is_game_over}
           />
         }
-        sidePanel={<StatusPanel game={game} loading={loading} requestError={requestError} />}
+        sidePanel={<StatusPanel game={game} loading={loading} requestError={requestError} onExplainMove={explainMove} />}
       />
 
       {showResultDialog && game?.is_game_over ? (

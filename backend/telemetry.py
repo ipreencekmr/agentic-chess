@@ -58,7 +58,7 @@ def setup_tracing(app) -> None:
     # Auto-instrument httpx — traces any outbound HTTP calls (e.g. OpenAI)
     HTTPXClientInstrumentor().instrument()
 
-    print(f"[telemetry] Tracing enabled → service={service_name} endpoint={endpoint}")
+    print(f"[telemetry] Tracing enabled -> service={service_name} endpoint={endpoint}")
 
 
 def get_tracer(name: str = "agentic-chess"):

@@ -26,6 +26,8 @@ class ChessGame:
         self.last_move: str | None = None
         self.error: str | None = None
         self.ai_move: str | None = None
+        self.move_explanation: str | None = None
+        self.last_ai_move_fen: str | None = None
 
     def player_name(self, color: bool) -> str:
         return self.white_name if color == chess.WHITE else self.black_name
@@ -42,6 +44,10 @@ class ChessGame:
             return "Stalemate! Draw."
         if self.board.is_insufficient_material():
             return "Draw by insufficient material."
+        if self.board.can_claim_threefold_repetition():
+            return "Draw by threefold repetition."
+        if self.board.can_claim_fifty_moves():
+            return "Draw by fifty-move rule."
         if self.board.is_check():
             return f"{self.turn_name} is in check."
         return f"{self.turn_name}'s turn."
@@ -66,6 +72,7 @@ class ChessGame:
             "legal_moves": self.legal_moves(),
             "move_history": self.move_history,
             "is_game_over": self.board.is_game_over(),
+            "move_explanation": self.move_explanation,
         }
 
     def reset(self) -> None:
@@ -74,6 +81,8 @@ class ChessGame:
         self.last_move = None
         self.error = None
         self.ai_move = None
+        self.move_explanation = None
+        self.last_ai_move_fen = None
 
     def push_move(self, move_uci: str) -> bool:
         try:
@@ -100,6 +109,8 @@ class ChessGame:
             self.last_move = self.move_history[-1] if self.move_history else None
             self.error = None
             self.ai_move = None
+            self.move_explanation = None
+            self.last_ai_move_fen = None
 
     def undo_turn(self) -> None:
         self.undo()
@@ -108,10 +119,14 @@ class ChessGame:
 
     def maybe_play_ai(self) -> None:
         self.ai_move = None
+        self.move_explanation = None
         # Only play AI if in single player mode, game is not over, and it's black's turn
         if self.mode != "Single Player" or self.board.is_game_over() or self.board.turn != chess.BLACK:
             return
 
+        # Store FEN before AI makes its move (for later explanation)
+        self.last_ai_move_fen = self.board.fen()
+        
         move_uci, warning = choose_ai_move(self.board, self.difficulty, self.ai_model)
         if warning:
             self.error = warning

@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+
 import * as gameApi from "../services/gameApi";
 
 export function useChessGame() {
@@ -7,17 +8,13 @@ export function useChessGame() {
   const [loading, setLoading] = useState(false);
   const [requestError, setRequestError] = useState("");
 
-  // Helper to wrap async API calls with loading and error state management
   const withLoading = useCallback(async (fn) => {
     setLoading(true);
     setRequestError("");
     try {
       return await fn();
     } catch (error) {
-      const message =
-        error?.response?.data?.detail ||
-        error?.message ||
-        "Request failed.";
+      const message = error?.response?.data?.detail || error?.message || "Request failed.";
       setRequestError(String(message));
       return null;
     } finally {
@@ -25,7 +22,6 @@ export function useChessGame() {
     }
   }, []);
 
-  // Start a new chess game
   const startGame = useCallback(
     async ({ mode, difficulty, aiModel, whiteName, blackName }) => {
       const result = await withLoading(() =>
@@ -34,7 +30,7 @@ export function useChessGame() {
           difficulty,
           ai_model: aiModel,
           white_name: whiteName,
-          black_name: blackName,
+          black_name: blackName
         })
       );
       if (!result) return false;
@@ -45,19 +41,14 @@ export function useChessGame() {
     [withLoading]
   );
 
-  // Make a move and trigger agent if needed
   const movePiece = useCallback(
     async (moveUci) => {
       if (!gameId) return false;
       const result = await withLoading(() => gameApi.move(gameId, moveUci));
       if (!result) return false;
       setGame(result);
-
-      // Trigger agent move if single player, game not over, and it's black's turn
       const shouldTriggerAgent =
-        result.mode === "Single Player" &&
-        !result.is_game_over &&
-        result.turn_name === result.black_name;
+        result.mode === "Single Player" && !result.is_game_over && result.turn_name === result.black_name;
       if (!shouldTriggerAgent) {
         return !result.error;
       }
@@ -70,29 +61,29 @@ export function useChessGame() {
     [gameId, withLoading]
   );
 
-  // Reset the current game
-  const resetGame = useCallback(
-    async () => {
-      if (!gameId) return false;
-      const result = await withLoading(() => gameApi.reset(gameId));
-      if (!result) return false;
-      setGame(result);
-      return true;
-    },
-    [gameId, withLoading]
-  );
+  const resetGame = useCallback(async () => {
+    if (!gameId) return false;
+    const result = await withLoading(() => gameApi.reset(gameId));
+    if (!result) return false;
+    setGame(result);
+    return true;
+  }, [gameId, withLoading]);
 
-  // Undo the last move
-  const undoMove = useCallback(
-    async () => {
-      if (!gameId) return false;
-      const result = await withLoading(() => gameApi.undo(gameId));
-      if (!result) return false;
-      setGame(result);
-      return true;
-    },
-    [gameId, withLoading]
-  );
+  const undoMove = useCallback(async () => {
+    if (!gameId) return false;
+    const result = await withLoading(() => gameApi.undo(gameId));
+    if (!result) return false;
+    setGame(result);
+    return true;
+  }, [gameId, withLoading]);
+
+  const explainMove = useCallback(async () => {
+    if (!gameId) return false;
+    const result = await withLoading(() => gameApi.explainMove(gameId));
+    if (!result) return false;
+    setGame(result);
+    return true;
+  }, [gameId, withLoading]);
 
   return {
     game,
@@ -102,5 +93,6 @@ export function useChessGame() {
     movePiece,
     resetGame,
     undoMove,
+    explainMove
   };
 }
