@@ -1,8 +1,8 @@
-name: Weekly Code Cleanup and Refactor
+name: Monthly Code Cleanup and Refactor
 
 on:
   schedule:
-    - cron: '30 4 * * 1'  # Every Monday at 04:30 UTC = 10:00 AM IST
+    - cron: '30 4 25 * *'  # 25th of every month at 04:30 UTC = 10:00 AM IST
   workflow_dispatch:       # Allow manual trigger from Actions tab
     inputs:
       dry_run:
