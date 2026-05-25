@@ -8,7 +8,7 @@ from .engine import StockfishService
 from .ai import is_openai_ready
 from .game import GameStore
 from .schemas import GameStateResponse, MoveRequest, StartGameRequest
-from .telemetry import setup_tracing  # ← new
+from .telemetry import setup_tracing
 
 load_dotenv()
 
@@ -27,6 +27,7 @@ app.add_middleware(
 store = GameStore()
 
 def _get_game_or_404(game_id: str):
+    """Helper to fetch a game or raise 404 if not found."""
     game = store.get(game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Game not found.")
@@ -53,7 +54,7 @@ def health() -> dict:
 @app.post("/api/game/start", response_model=GameStateResponse)
 def start_game(payload: StartGameRequest) -> dict:
     disable_ai_mode = os.getenv("DISABLE_AI_MODE", "false").lower() == "true"
-    
+
     if payload.difficulty == "AI Agent":
         if disable_ai_mode:
             raise HTTPException(status_code=400, detail="AI Agent mode is disabled via DISABLE_AI_MODE environment variable.")
@@ -69,12 +70,10 @@ def start_game(payload: StartGameRequest) -> dict:
     )
     return game.to_payload(game_id)
 
-
 @app.get("/api/game/{game_id}", response_model=GameStateResponse)
 def get_game(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
     return game.to_payload(game_id)
-
 
 @app.post("/api/game/{game_id}/move", response_model=GameStateResponse)
 def move(game_id: str, payload: MoveRequest) -> dict:
@@ -88,7 +87,6 @@ def move(game_id: str, payload: MoveRequest) -> dict:
 
     return game.to_payload(game_id)
 
-
 @app.post("/api/game/{game_id}/agent-move", response_model=GameStateResponse)
 def agent_move(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
@@ -99,13 +97,11 @@ def agent_move(game_id: str) -> dict:
     game.maybe_play_ai()
     return game.to_payload(game_id)
 
-
 @app.post("/api/game/{game_id}/undo", response_model=GameStateResponse)
 def undo(game_id: str) -> dict:
     game = _get_game_or_404(game_id)
     game.undo_turn()
     return game.to_payload(game_id)
-
 
 @app.post("/api/game/{game_id}/reset", response_model=GameStateResponse)
 def reset(game_id: str) -> dict:
@@ -117,38 +113,36 @@ def reset(game_id: str) -> dict:
 def explain_move(game_id: str) -> dict:
     """Explain the last AI move using LLM analysis."""
     game = _get_game_or_404(game_id)
-    
+
     if not game.ai_move:
         raise HTTPException(status_code=400, detail="No AI move to explain.")
-    
+
     if not game.last_ai_move_fen:
         raise HTTPException(status_code=400, detail="No position data available for explanation.")
-    
+
     if not is_openai_ready():
         raise HTTPException(status_code=400, detail="OpenAI API not available for explanations.")
-    
+
     try:
         from .agents.chess_agent import explain_chess_move
         from .ai import _openai_client
-        
+
         client = _openai_client()
         if not client:
             raise HTTPException(status_code=500, detail="Failed to initialize OpenAI client.")
-        
+
         explanation = explain_chess_move(
             client,
             game.ai_model,
             game.last_ai_move_fen,  # FEN before the move
             game.ai_move
         )
-        
+
         game.move_explanation = explanation
         return game.to_payload(game_id)
-        
+
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Explanation failed: {exc}")
-
-
 
 @app.delete("/api/game/{game_id}")
 def close_game(game_id: str) -> dict:

@@ -23,6 +23,9 @@ export function GameControls({
       </option>
     ));
 
+  const isAiAgentMode =
+    settings.mode === "Single Player" && settings.difficulty === "AI Agent";
+
   return (
     <div className="controls-grid">
       <label>
@@ -47,7 +50,7 @@ export function GameControls({
         </select>
       </label>
 
-      {settings.mode === "Single Player" && settings.difficulty === "AI Agent" ? (
+      {isAiAgentMode ? (
         <label>
           AI Agent Model
           <select
