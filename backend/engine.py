@@ -73,7 +73,6 @@ class StockfishService:
             with cls._lock:
                 if cls._instance is None:
                     path = os.getenv("STOCKFISH_PATH")
-
                     print(f"StockfishService->Initialized: {path}")
 
                     if not path:

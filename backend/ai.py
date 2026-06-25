@@ -26,7 +26,12 @@ def _capture_priority_move(board: chess.Board, legal_moves: list[chess.Move]) ->
     captures = [move for move in legal_moves if board.is_capture(move)]
     return random.choice(captures) if captures else random.choice(legal_moves)
 
-def _get_stockfish_move(board: chess.Board, legal_moves: list[chess.Move], skill_level: int, depth: int) -> tuple[str | None, str | None]:
+def _get_stockfish_move(
+    board: chess.Board,
+    legal_moves: list[chess.Move],
+    skill_level: int,
+    depth: int
+) -> tuple[str | None, str | None]:
     """
     Get the best move from Stockfish engine.
     If engine fails or returns an illegal move, fallback to capture-priority heuristic.
@@ -45,7 +50,11 @@ def _get_stockfish_move(board: chess.Board, legal_moves: list[chess.Move], skill
         move = _capture_priority_move(board, legal_moves)
         return move.uci(), f"Engine error: {exc}. Falling back to capture-priority heuristic."
 
-def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[str | None, str | None]:
+def choose_ai_move(
+    board: chess.Board,
+    difficulty: str,
+    ai_model: str
+) -> tuple[str | None, str | None]:
     """
     Choose an AI move based on difficulty and model.
     Returns a tuple of (move_uci, error_message).
@@ -62,7 +71,12 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
 
     if difficulty in stockfish_difficulties:
         params = stockfish_difficulties[difficulty]
-        return _get_stockfish_move(board, legal_moves, params["skill_level"], params["depth"])
+        return _get_stockfish_move(
+            board,
+            legal_moves,
+            params["skill_level"],
+            params["depth"]
+        )
 
     # AI Agent uses LLM with tool calling (LLM must use tool, not its own reasoning)
     if difficulty == "AI Agent":
@@ -72,7 +86,7 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
 
         try:
             from .agents.chess_agent import get_agent_move
-            
+
             move_uci, error = get_agent_move(
                 client,
                 ai_model,
@@ -93,5 +107,3 @@ def choose_ai_move(board: chess.Board, difficulty: str, ai_model: str) -> tuple[
 
     # Default fallback: random legal move
     return random.choice(legal_moves).uci(), None
-
-

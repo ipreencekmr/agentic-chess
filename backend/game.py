@@ -114,6 +114,7 @@ class ChessGame:
 
     def undo_turn(self) -> None:
         self.undo()
+        # In single player mode, undo the AI's move as well if it's black's turn after undo
         if self.mode == "Single Player" and self.board.move_stack and self.board.turn == chess.BLACK:
             self.undo()
 
@@ -126,7 +127,7 @@ class ChessGame:
 
         # Store FEN before AI makes its move (for later explanation)
         self.last_ai_move_fen = self.board.fen()
-        
+
         move_uci, warning = choose_ai_move(self.board, self.difficulty, self.ai_model)
         if warning:
             self.error = warning

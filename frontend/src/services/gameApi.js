@@ -17,7 +17,6 @@ async function fetchWithTimeout(resource, options = {}) {
       ...options,
       signal: controller.signal
     });
-    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -105,10 +104,15 @@ export async function undo(gameId) {
   });
 }
 
-
+/**
+ * Explain the last move using LLM (longer timeout).
+ * @param {string} gameId - Game identifier.
+ * @returns {Promise<any>}
+ */
 export async function explainMove(gameId) {
+  // 30 seconds timeout for LLM explanation
   return await fetchWithTimeout(`${BASE_URL}/game/${gameId}/explain-move`, {
     method: "POST",
-    timeout: 30000  // 30 seconds for LLM explanation
+    timeout: 30000
   });
 }
